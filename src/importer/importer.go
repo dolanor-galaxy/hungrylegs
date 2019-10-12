@@ -2,7 +2,6 @@ package importer
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/therohans/HungryLegs/src/models"
@@ -19,18 +18,75 @@ type Importer interface {
 
 type FitFile struct{}
 
-func (f *FitFile) Import(file string, repo repository.AthleteRepository) error {
+func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error {
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
 	}
-
 	// Decode the FIT file data
-	_, err = fit.Decode(bytes.NewReader(data))
+	fitFile, err := fit.Decode(bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
-	// fmt.Println(fit.Type())
+
+	if fitFile.Type() == fit.FileTypeActivity {
+		activity, err := fitFile.Activity()
+		if err != nil {
+			return err
+		}
+
+		var activityID int64
+		for _, session := range activity.Sessions {
+			hlAct := models.Activity{
+				ID:    session.Timestamp,
+				Sport: session.Sport.String(),
+			}
+			activityID, err = repo.AddActivity(&hlAct)
+			// fmt.Printf("act: %v \n", hlAct)
+			if err != nil {
+				return err
+			}
+		}
+
+		for _, lap := range activity.Laps {
+			hlLap := models.Lap{
+				Start:         lap.StartTime.String(),
+				TotalTime:     float64(lap.TotalElapsedTime / 1000),
+				Dist:          float64(lap.TotalDistance) / 100000,
+				Calories:      float64(lap.TotalCalories),
+				MaxSpeed:      float64(lap.MaxSpeed),
+				AvgHr:         float64(lap.AvgHeartRate),
+				MaxHr:         float64(lap.MaxHeartRate),
+				Intensity:     lap.Intensity.String(),
+				TriggerMethod: lap.LapTrigger.String(),
+			}
+			lapID, err := repo.AddLap(activityID, &hlLap)
+			// fmt.Printf("lap: %v \n", hlLap)
+			if err != nil {
+				return err
+			}
+
+			for _, track := range activity.Records {
+				htTrack := models.Trackpoint{
+					Time:  track.Timestamp,
+					Lat:   track.PositionLat.Degrees(),
+					Long:  track.PositionLong.Degrees(),
+					Alt:   float64(track.Altitude),
+					Dist:  float64(track.Distance),
+					HR:    float64(track.HeartRate),
+					Cad:   float64(track.Cadence),
+					Speed: float64(track.Speed),
+					Power: float64(track.Power),
+				}
+				_, err := repo.AddTrackPoint(lapID, &htTrack)
+				// fmt.Printf("track: %v \n", htTrack)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -38,8 +94,7 @@ func (f *FitFile) Import(file string, repo repository.AthleteRepository) error {
 
 type TcxFile struct{}
 
-func (f *TcxFile) Import(file string, repo repository.AthleteRepository) error {
-	fmt.Println(file)
+func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error {
 	tcxdb, err := tcx.ReadFile(file)
 	if err != nil {
 		return err

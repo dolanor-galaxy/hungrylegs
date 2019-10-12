@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/therohans/HungryLegs/src/importer"
@@ -57,63 +58,75 @@ func loadConfig(file string) (*models.StaticConfig, error) {
 	return &config, nil
 }
 
-func main() {
-	config, err := loadConfig("config.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("%v", config)
-
-	db, err := openAthlete("professor_zoom")
-	defer db.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = updateAthleteStore(db)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func importNewActivity(config *models.StaticConfig, repo *repository.AthleteRepository) {
+	log.Println("Beginning import of new files...")
 	files, err := ioutil.ReadDir(config.ImportDir)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	repo := repository.AthleteRepository{
-		Db: db,
 	}
 
 	for _, f := range files {
 		name := f.Name()
 		name = strings.ToLower(name)
 
-		if strings.HasSuffix(name, ".tcx") {
-			tcxFile := importer.TcxFile{}
-			err := tcxFile.Import(filepath.Join(config.ImportDir, name), repo)
-			if err != nil {
-				log.Fatal(err)
+		have, err := repo.HasImported(name)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if have == false {
+			start := time.Now()
+			if strings.HasSuffix(name, ".tcx") {
+				tcxFile := importer.TcxFile{}
+				err := tcxFile.Import(filepath.Join(config.ImportDir, name), repo)
+				if err != nil {
+					log.Fatal(err)
+				}
+			} else if strings.HasSuffix(name, ".fit") {
+				fitFile := importer.FitFile{}
+				err := fitFile.Import(filepath.Join(config.ImportDir, name), repo)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
-		} else if strings.HasSuffix(name, ".fit") {
-			fitFile := importer.FitFile{}
-			err := fitFile.Import(filepath.Join(config.ImportDir, name), repo)
-			if err != nil {
-				log.Fatal(err)
-			}
+			repo.RecordImport(name)
+
+			t := time.Now()
+			elapsed := t.Sub(start)
+			log.Printf("%v took %v", name, elapsed)
+		} else {
+			log.Printf("Already imported %v\n", name)
 		}
 	}
+	log.Println("Done import")
+}
 
-	// statement, _ := db.Prepare("create table if not exists people (id INTEGER PRIMARY KEY, firstname TEXT)")
-	// statement.Exec()
-	// statement, _ := db.Prepare("INSERT INTO PEOPLE (firstname) VALUES (?)")
-	// statement.Exec("Rob")
-	// rows, _ := db.Query("SELECT id, firstname FROM people")
+func main() {
+	// Load configs
+	config, err := loadConfig("config.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("%v", config)
 
-	// p := P{}
-	// for rows.Next() {
-	// 	rows.Scan(&p.ID, &p.FirstName)
-	// 	// fmt.Println(strconv.Itoa(id) + ": " + firstname)
-	// 	fmt.Println(p)
-	// }
+	// Open an athlete (an sqlite database)
+	db, err := openAthlete("professor_zoom")
+	defer db.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Run any migrations
+	err = updateAthleteStore(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Put the API on top of the connection
+	repo := repository.AthleteRepository{
+		Db: db,
+	}
+
+	importNewActivity(config, &repo)
 }
 
 func Example() {
