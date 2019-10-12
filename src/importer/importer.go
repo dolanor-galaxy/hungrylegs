@@ -30,6 +30,11 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 	}
 
 	if fitFile.Type() == fit.FileTypeActivity {
+		tx, err := repo.Begin()
+		if err != nil {
+			return err
+		}
+
 		activity, err := fitFile.Activity()
 		if err != nil {
 			return err
@@ -44,6 +49,7 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 			activityID, err = repo.AddActivity(&hlAct)
 			// fmt.Printf("act: %v \n", hlAct)
 			if err != nil {
+				tx.Rollback()
 				return err
 			}
 		}
@@ -63,6 +69,7 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 			lapID, err := repo.AddLap(activityID, &hlLap)
 			// fmt.Printf("lap: %v \n", hlLap)
 			if err != nil {
+				tx.Rollback()
 				return err
 			}
 
@@ -81,10 +88,13 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 				_, err := repo.AddTrackPoint(lapID, &htTrack)
 				// fmt.Printf("track: %v \n", htTrack)
 				if err != nil {
+					tx.Rollback()
 					return err
 				}
 			}
 		}
+
+		tx.Commit()
 	}
 
 	return nil
@@ -101,6 +111,11 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 	}
 
 	for i := range tcxdb.Acts.Act {
+		tx, err := repo.Begin()
+		if err != nil {
+			return err
+		}
+
 		act := tcxdb.Acts.Act[i]
 		hlAct := models.Activity{
 			ID:    act.Id,
@@ -108,6 +123,7 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 		}
 		activityID, err := repo.AddActivity(&hlAct)
 		if err != nil {
+			tx.Rollback()
 			return err
 		}
 
@@ -126,6 +142,7 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 			}
 			lapID, err := repo.AddLap(activityID, &hlLap)
 			if err != nil {
+				tx.Rollback()
 				return err
 			}
 
@@ -144,10 +161,13 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 				}
 				_, err := repo.AddTrackPoint(lapID, &htTrack)
 				if err != nil {
+					tx.Rollback()
 					return err
 				}
 			}
 		}
+
+		tx.Commit()
 	}
 
 	return nil

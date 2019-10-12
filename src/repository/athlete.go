@@ -11,6 +11,10 @@ type AthleteRepository struct {
 	Db *sql.DB
 }
 
+func (r *AthleteRepository) Begin() (*sql.Tx, error) {
+	return r.Db.Begin()
+}
+
 func (r *AthleteRepository) HasImported(file string) (bool, error) {
 	statement, err := r.Db.Prepare(`
 		SELECT id FROM FileImport WHERE file_name = ?

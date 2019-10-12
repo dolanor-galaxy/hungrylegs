@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -16,7 +14,6 @@ import (
 	"github.com/therohans/HungryLegs/src/importer"
 	"github.com/therohans/HungryLegs/src/models"
 	"github.com/therohans/HungryLegs/src/repository"
-	"github.com/tormoder/fit"
 
 	migrate "github.com/rubenv/sql-migrate"
 )
@@ -127,52 +124,4 @@ func main() {
 	}
 
 	importNewActivity(config, &repo)
-}
-
-func Example() {
-	// Read our FIT test file data
-	testFile := filepath.Join("import", "run_no_heart.FIT")
-	testData, err := ioutil.ReadFile(testFile)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	// Decode the FIT file data
-	fit, err := fit.Decode(bytes.NewReader(testData))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	// Inspect the TimeCreated field in the FileId message
-	fmt.Println(fit.FileId.TimeCreated)
-
-	fmt.Println(fit.Type())
-
-	// Inspect the dynamic Product field in the FileId message
-	fmt.Println(fit.FileId.GetProduct())
-
-	// Inspect the FIT file type
-	// fmt.Println(fit.FileType())
-
-	// Get the actual activity
-	activity, err := fit.Activity()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	// Print the latitude and longitude of the first Record message
-	for _, record := range activity.Records {
-		fmt.Println(record.PositionLat)
-		fmt.Println(record.PositionLong)
-		break
-	}
-
-	// Print the sport of the first Session message
-	for _, session := range activity.Sessions {
-		fmt.Println(session.Sport)
-		break
-	}
 }
