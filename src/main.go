@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -18,31 +19,53 @@ type P struct {
 	FirstName string
 }
 
-func main() {
-	Example()
+func openAthlete(name string) (*sql.DB, error) {
+	athletePath := filepath.Join("store", "athletes", name+".db")
+	db, err := sql.Open("sqlite3", athletePath)
+	if err != nil {
+		log.Printf("Failed to open athlete store")
+		return nil, err
+	}
+	return db, nil
+}
 
-	db, _ := sql.Open("sqlite3", "./bogo.db")
-
+func updateAthleteStore(db *sql.DB) error {
 	migrations := &migrate.FileMigrationSource{
 		Dir: "migrations",
 	}
-	fmt.Printf("%v\n", migrations)
+	n, err := migrate.Exec(db, "sqlite3", migrations, migrate.Up)
+	if err != nil {
+		log.Printf("Filed migrations\n")
+		return err
+	}
+	log.Printf("Applied %d migrations\n", n)
+	return nil
+}
 
-	n, _ := migrate.Exec(db, "sqlite3", migrations, migrate.Up)
-	fmt.Printf("Applied %d migrations!\n", n)
+func main() {
+	// Example()
+
+	db, err := openAthlete("professor_zoom")
+	if err != nil {
+		panic("Couldn't open athlete")
+	}
+	err = updateAthleteStore(db)
+	if err != nil {
+		panic("Couldn't update athlete db")
+	}
 
 	// statement, _ := db.Prepare("create table if not exists people (id INTEGER PRIMARY KEY, firstname TEXT)")
 	// statement.Exec()
 	// statement, _ := db.Prepare("INSERT INTO PEOPLE (firstname) VALUES (?)")
 	// statement.Exec("Rob")
-	rows, _ := db.Query("SELECT id, firstname FROM people")
+	// rows, _ := db.Query("SELECT id, firstname FROM people")
 
-	p := P{}
-	for rows.Next() {
-		rows.Scan(&p.ID, &p.FirstName)
-		// fmt.Println(strconv.Itoa(id) + ": " + firstname)
-		fmt.Println(p)
-	}
+	// p := P{}
+	// for rows.Next() {
+	// 	rows.Scan(&p.ID, &p.FirstName)
+	// 	// fmt.Println(strconv.Itoa(id) + ": " + firstname)
+	// 	fmt.Println(p)
+	// }
 }
 
 func Example() {
@@ -63,6 +86,8 @@ func Example() {
 
 	// Inspect the TimeCreated field in the FileId message
 	fmt.Println(fit.FileId.TimeCreated)
+
+	fmt.Println(fit.Type())
 
 	// Inspect the dynamic Product field in the FileId message
 	fmt.Println(fit.FileId.GetProduct())

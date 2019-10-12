@@ -2,9 +2,16 @@ package tcx
 
 import (
 	"encoding/xml"
-	"fmt"
 	"time"
+
+	"github.com/therohans/HungryLegs/src/models"
 )
+
+type TCXDB struct {
+	XMLName xml.Name           `xml:"TrainingCenterDatabase"`
+	Acts    *models.Activities `xml:"Activities"`
+	Auth    models.Author      `xml:"Author"`
+}
 
 type Trackpoint struct {
 	Time  time.Time
@@ -16,6 +23,10 @@ type Trackpoint struct {
 	Cad   float64 `xml:"Cadence,omitempty"`
 	Speed float64 `xml:"Extensions>TPX>Speed,omitempty"`
 	Power float64 `xml:"Extensions>TPX>Watts,omitempty"`
+}
+
+type Track struct {
+	Pt []Trackpoint `xml:"Trackpoint"`
 }
 
 type Lap struct {
@@ -31,28 +42,11 @@ type Lap struct {
 	Trk           *Track  `xml:"Track"`
 }
 
-type Track struct {
-	Pt []Trackpoint `xml:"Trackpoint"`
-}
-
 type Activity struct {
 	Sport   string `xml:"Sport,attr,omitempty"`
 	Id      time.Time
 	Laps    []Lap  `xml:"Lap,omitempty"`
 	Creator Device `xml:"Creator,omitempty"`
-}
-
-type Device struct {
-	Name      string       `xml:",omitempty"`
-	UnitId    int          `xml:",omitempty"`
-	ProductID string       `xml:",omitempty"`
-	Version   BuildVersion `xml:",omitempty"`
-}
-
-type TCXDB struct {
-	XMLName xml.Name    `xml:"TrainingCenterDatabase"`
-	Acts    *Activities `xml:"Activities"`
-	Auth    Author      `xml:"Author"`
 }
 
 type Activities struct {
@@ -66,8 +60,12 @@ type Author struct {
 	PartNumber string `xml:",omitempty"`
 }
 
-func (a Author) String() string {
-	return fmt.Sprintf("%v: version %v.%v.%v.%v", a.Name, a.Build.Version.VersionMajor, a.Build.Version.VersionMinor, a.Build.Version.BuildMajor, a.Build.Version.BuildMinor)
+// Device is the tech used to capture this data - e.g. Fenix 3
+type Device struct {
+	Name      string       `xml:",omitempty"`
+	UnitId    int          `xml:",omitempty"`
+	ProductID string       `xml:",omitempty"`
+	Version   BuildVersion `xml:",omitempty"`
 }
 
 type Build struct {
