@@ -3,21 +3,21 @@ package main
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/therohans/HungryLegs/src/importer"
+	"github.com/therohans/HungryLegs/src/models"
 	"github.com/tormoder/fit"
 
 	migrate "github.com/rubenv/sql-migrate"
 )
-
-type P struct {
-	ID        int
-	FirstName string
-}
 
 func openAthlete(name string) (*sql.DB, error) {
 	athletePath := filepath.Join("store", "athletes", name+".db")
@@ -42,16 +42,59 @@ func updateAthleteStore(db *sql.DB) error {
 	return nil
 }
 
+func loadConfig(file string) (*models.StaticConfig, error) {
+	var config models.StaticConfig
+	configFile, err := os.Open(file)
+	defer configFile.Close()
+	if err != nil {
+		log.Printf("Opening log file failed %v\n", err.Error())
+		return nil, err
+	}
+	jsonParser := json.NewDecoder(configFile)
+	jsonParser.Decode(&config)
+
+	return &config, nil
+}
+
 func main() {
-	// Example()
+	config, err := loadConfig("config.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("%v", config)
 
 	db, err := openAthlete("professor_zoom")
+	defer db.Close()
 	if err != nil {
-		panic("Couldn't open athlete")
+		log.Fatal(err)
 	}
 	err = updateAthleteStore(db)
 	if err != nil {
-		panic("Couldn't update athlete db")
+		log.Fatal(err)
+	}
+
+	files, err := ioutil.ReadDir(config.ImportDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, f := range files {
+		name := f.Name()
+		name = strings.ToLower(name)
+
+		if strings.HasSuffix(name, ".tcx") {
+			tcxFile := importer.TcxFile{}
+			err := tcxFile.Import(filepath.Join(config.ImportDir, name), db)
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else if strings.HasSuffix(name, ".fit") {
+			fitFile := importer.FitFile{}
+			err := fitFile.Import(filepath.Join(config.ImportDir, name), db)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
 
 	// statement, _ := db.Prepare("create table if not exists people (id INTEGER PRIMARY KEY, firstname TEXT)")

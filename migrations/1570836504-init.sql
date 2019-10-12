@@ -40,6 +40,14 @@ CREATE TABLE IF NOT EXISTS Activity (
 CREATE INDEX idx_tp_lap ON TrackPoint(lap_id);
 CREATE INDEX idx_lap_act ON Lap(activity_id);
 
+-- Table to know if we've already imported something
+CREATE TABLE IF NOT EXISTS FileImport (
+  id INTEGER PRIMARY KEY,
+  import_time  TEXT,
+  `file_name`  TEXT
+);
+CREATE INDEX idx_file_name ON FileImport(`file_name`);
+
 -- +migrate Down
 -- SQL section 'Down' is executed when this migration is rolled back
 DROP TABLE Trackpoint;
