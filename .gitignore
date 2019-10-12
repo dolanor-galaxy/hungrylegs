@@ -1,2 +1,3 @@
 .DS_Store
 store/athletes/*.db
+store/athletes/*.db-journal

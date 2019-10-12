@@ -14,6 +14,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/therohans/HungryLegs/src/importer"
 	"github.com/therohans/HungryLegs/src/models"
+	"github.com/therohans/HungryLegs/src/repository"
 	"github.com/tormoder/fit"
 
 	migrate "github.com/rubenv/sql-migrate"
@@ -78,19 +79,23 @@ func main() {
 		log.Fatal(err)
 	}
 
+	repo := repository.AthleteRepository{
+		Db: db,
+	}
+
 	for _, f := range files {
 		name := f.Name()
 		name = strings.ToLower(name)
 
 		if strings.HasSuffix(name, ".tcx") {
 			tcxFile := importer.TcxFile{}
-			err := tcxFile.Import(filepath.Join(config.ImportDir, name), db)
+			err := tcxFile.Import(filepath.Join(config.ImportDir, name), repo)
 			if err != nil {
 				log.Fatal(err)
 			}
 		} else if strings.HasSuffix(name, ".fit") {
 			fitFile := importer.FitFile{}
-			err := fitFile.Import(filepath.Join(config.ImportDir, name), db)
+			err := fitFile.Import(filepath.Join(config.ImportDir, name), repo)
 			if err != nil {
 				log.Fatal(err)
 			}

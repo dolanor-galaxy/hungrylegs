@@ -3,14 +3,12 @@ package tcx
 import (
 	"encoding/xml"
 	"time"
-
-	"github.com/therohans/HungryLegs/src/models"
 )
 
 type TCXDB struct {
-	XMLName xml.Name           `xml:"TrainingCenterDatabase"`
-	Acts    *models.Activities `xml:"Activities"`
-	Auth    models.Author      `xml:"Author"`
+	XMLName xml.Name    `xml:"TrainingCenterDatabase"`
+	Acts    *Activities `xml:"Activities"`
+	Auth    Author      `xml:"Author"`
 }
 
 type Trackpoint struct {
@@ -63,7 +61,7 @@ type Author struct {
 // Device is the tech used to capture this data - e.g. Fenix 3
 type Device struct {
 	Name      string       `xml:",omitempty"`
-	UnitId    int          `xml:",omitempty"`
+	UnitId    uint         `xml:",omitempty"`
 	ProductID string       `xml:",omitempty"`
 	Version   BuildVersion `xml:",omitempty"`
 }
