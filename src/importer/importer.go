@@ -3,6 +3,10 @@ package importer
 import (
 	"bytes"
 	"io/ioutil"
+	"log"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/therohans/HungryLegs/src/models"
 	"github.com/therohans/HungryLegs/src/repository"
@@ -14,8 +18,52 @@ type Importer interface {
 	Import(file string, repo repository.AthleteRepository) error
 }
 
+func ImportNewActivity(config *models.StaticConfig, repo *repository.AthleteRepository) {
+	log.Println("Beginning import of new files...")
+	files, err := ioutil.ReadDir(config.ImportDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, f := range files {
+		name := f.Name()
+		name = strings.ToLower(name)
+
+		have, err := repo.HasImported(name)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if have == false {
+			start := time.Now()
+			if strings.HasSuffix(name, ".tcx") {
+				tcxFile := TcxFile{}
+				err := tcxFile.Import(filepath.Join(config.ImportDir, name), repo)
+				if err != nil {
+					log.Fatal(err)
+				}
+			} else if strings.HasSuffix(name, ".fit") {
+				fitFile := FitFile{}
+				err := fitFile.Import(filepath.Join(config.ImportDir, name), repo)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			repo.RecordImport(name)
+
+			t := time.Now()
+			elapsed := t.Sub(start)
+			log.Printf("%v took %v", name, elapsed)
+		} else {
+			log.Printf("Already imported %v\n", name)
+		}
+	}
+	log.Println("Done import")
+}
+
 ////////////////////////////////////
 
+// FitFile represents a .fit file (standard garmin)
 type FitFile struct{}
 
 func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error {
@@ -47,7 +95,6 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 				Sport: session.Sport.String(),
 			}
 			activityID, err = repo.AddActivity(&hlAct)
-			// fmt.Printf("act: %v \n", hlAct)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -67,7 +114,6 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 				TriggerMethod: lap.LapTrigger.String(),
 			}
 			lapID, err := repo.AddLap(activityID, &hlLap)
-			// fmt.Printf("lap: %v \n", hlLap)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -86,7 +132,6 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 					Power: float64(track.Power),
 				}
 				_, err := repo.AddTrackPoint(lapID, &htTrack)
-				// fmt.Printf("track: %v \n", htTrack)
 				if err != nil {
 					tx.Rollback()
 					return err
@@ -102,6 +147,7 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 
 ////////////////////////////////////
 
+// TcxFile represents an older .tcx file (old garmin)
 type TcxFile struct{}
 
 func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error {
