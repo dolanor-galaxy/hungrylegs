@@ -41,13 +41,12 @@ func main() {
 	repo := repository.Attach(athlete)
 	// Launch the activity importer
 	importer.ImportActivites(config.ImportDir, repo)
-	importer.ImportActivity("9A2C0321.FIT", config.ImportDir, repo)
 
 	//////////////////////
-	athlete2 := models.OpenAthlete("Punkin Pie")
-	defer athlete2.Close()
-	// Put the API on top of the connection
-	repo2 := repository.Attach(athlete2)
-	// Launch the activity importer
-	importer.ImportActivites(config.ImportDir, repo2)
+	// athlete2 := models.OpenAthlete("Punkin Pie")
+	// defer athlete2.Close()
+	// // Put the API on top of the connection
+	// repo2 := repository.Attach(athlete2)
+	// // Launch the activity importer
+	// importer.ImportActivites(config.ImportDir, repo2)
 }

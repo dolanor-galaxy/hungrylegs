@@ -232,23 +232,25 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 				return err
 			}
 
-			for t := range lap.Trk.Pt {
-				track := lap.Trk.Pt[t]
-				htTrack := models.Trackpoint{
-					Time:  track.Time,
-					Lat:   track.Lat,
-					Long:  track.Long,
-					Alt:   track.Alt,
-					Dist:  track.Dist,
-					HR:    track.HR,
-					Cad:   track.Cad,
-					Speed: track.Speed,
-					Power: track.Power,
-				}
-				_, err := repo.AddTrackPoint(activityID, &htTrack)
-				if err != nil {
-					tx.Rollback()
-					return err
+			if lap.Trk != nil && lap.Trk.Pt != nil {
+				for t := range lap.Trk.Pt {
+					track := lap.Trk.Pt[t]
+					htTrack := models.Trackpoint{
+						Time:  track.Time,
+						Lat:   track.Lat,
+						Long:  track.Long,
+						Alt:   track.Alt,
+						Dist:  track.Dist,
+						HR:    track.HR,
+						Cad:   track.Cad,
+						Speed: track.Speed,
+						Power: track.Power,
+					}
+					_, err := repo.AddTrackPoint(activityID, &htTrack)
+					if err != nil {
+						tx.Rollback()
+						return err
+					}
 				}
 			}
 		}

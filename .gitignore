@@ -1,4 +1,6 @@
 .DS_Store
+*~
+\#*\#
 import/*.fit
 import/*.tcx
 store/athletes/*.db
