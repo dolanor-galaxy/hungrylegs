@@ -29,8 +29,11 @@ func prepareQuery(query string, db *sql.DB) *sql.Stmt {
 }
 
 // NewAthleteRepository creates a new repository and sets up needed bits
-func NewAthleteRepository(db *sql.DB) *AthleteRepository {
-	a := AthleteRepository{db}
+func NewAthleteRepository(athlete *models.Athlete) *AthleteRepository {
+	db := athlete.Db
+	a := AthleteRepository{
+		Db: db,
+	}
 
 	if hasImportedQuery == nil {
 		hasImportedQuery = prepareQuery(`
