@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -20,51 +21,69 @@ type Importer interface {
 	Import(file string, repo repository.AthleteRepository) error
 }
 
-func ImportNewActivity(config *models.StaticConfig, repo *repository.AthleteRepository) {
+func ImportActivity(f os.FileInfo, directory string, repo *repository.AthleteRepository) error {
+	err := importFile(f, directory, repo)
+	if err != nil {
+		log.Printf("Error importing file: %v : %v", f, err.Error())
+		return err
+	}
+	return nil
+}
+
+func ImportActivites(directory string, repo *repository.AthleteRepository) error {
 	log.Println("Beginning import of new files...")
-	files, err := ioutil.ReadDir(config.ImportDir)
+	files, err := ioutil.ReadDir(directory)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, f := range files {
-		name := f.Name()
-		name = strings.ToLower(name)
-
-		// Check if this file has already been imported
-		have, err := repo.HasImported(name)
+		err = importFile(f, directory, repo)
 		if err != nil {
-			log.Fatal(err)
-		}
-
-		if have == false {
-			start := time.Now()
-			// We only support tcx and fit files
-			if strings.HasSuffix(name, ".tcx") {
-				tcxFile := TcxFile{}
-				err := tcxFile.Import(filepath.Join(config.ImportDir, name), repo)
-				if err != nil {
-					log.Fatal(err)
-				}
-			} else if strings.HasSuffix(name, ".fit") {
-				fitFile := FitFile{}
-				err := fitFile.Import(filepath.Join(config.ImportDir, name), repo)
-				if err != nil {
-					log.Fatal(err)
-				}
-			} else {
-				continue
-			}
-			repo.RecordImport(name)
-
-			t := time.Now()
-			elapsed := t.Sub(start)
-			log.Printf("%v took %v", name, elapsed)
-		} else {
-			log.Printf("Already imported %v\n", name)
+			log.Printf("Error importing file: %v : %v", f, err.Error())
 		}
 	}
 	log.Println("Done import")
+	return nil
+}
+
+func importFile(f os.FileInfo, directory string, repo *repository.AthleteRepository) error {
+	name := f.Name()
+	name = strings.ToLower(name)
+
+	// Check if this file has already been imported
+	have, err := repo.HasImported(name)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if have == false {
+		start := time.Now()
+		// We only support tcx and fit files
+		if strings.HasSuffix(name, ".tcx") {
+			tcxFile := TcxFile{}
+			err := tcxFile.Import(filepath.Join(directory, name), repo)
+			if err != nil {
+				return err
+			}
+		} else if strings.HasSuffix(name, ".fit") {
+			fitFile := FitFile{}
+			err := fitFile.Import(filepath.Join(directory, name), repo)
+			if err != nil {
+				return err
+			}
+		} else {
+			return nil
+		}
+		repo.RecordImport(name)
+
+		t := time.Now()
+		elapsed := t.Sub(start)
+		log.Printf("%v took %v", name, elapsed)
+	} else {
+		log.Printf("Already imported %v\n", name)
+	}
+	return nil
 }
 
 // ActivityHash makes a mostly unique hash

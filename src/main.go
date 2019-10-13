@@ -16,7 +16,7 @@ func loadConfig(file string) (*models.StaticConfig, error) {
 	configFile, err := os.Open(file)
 	defer configFile.Close()
 	if err != nil {
-		log.Printf("Opening log file failed %v\n", err.Error())
+		log.Printf("Opening config file failed %v\n", err.Error())
 		return nil, err
 	}
 	jsonParser := json.NewDecoder(configFile)
@@ -40,7 +40,7 @@ func main() {
 	// Put the API on top of the connection
 	repo := repository.Attach(athlete)
 	// Launch the activity importer
-	importer.ImportNewActivity(config, repo)
+	importer.ImportActivites(config.ImportDir, repo)
 
 	//////////////////////
 	athlete2 := models.OpenAthlete("Punkin Pie")
@@ -48,5 +48,5 @@ func main() {
 	// Put the API on top of the connection
 	repo2 := repository.Attach(athlete2)
 	// Launch the activity importer
-	importer.ImportNewActivity(config, repo2)
+	importer.ImportActivites(config.ImportDir, repo2)
 }
