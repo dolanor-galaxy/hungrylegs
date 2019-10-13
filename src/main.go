@@ -36,8 +36,17 @@ func main() {
 	log.Printf("%v", config)
 
 	athlete := models.OpenAthlete("Professor Zoom")
+	defer athlete.Close()
 	// Put the API on top of the connection
-	repo := repository.NewAthleteRepository(athlete)
+	repo := repository.Attach(athlete)
+	// Launch the activity importer
 	importer.ImportNewActivity(config, repo)
 
+	//////////////////////
+	athlete2 := models.OpenAthlete("Punkin Pie")
+	defer athlete2.Close()
+	// Put the API on top of the connection
+	repo2 := repository.Attach(athlete2)
+	// Launch the activity importer
+	importer.ImportNewActivity(config, repo2)
 }

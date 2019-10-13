@@ -52,6 +52,8 @@ func ImportNewActivity(config *models.StaticConfig, repo *repository.AthleteRepo
 				if err != nil {
 					log.Fatal(err)
 				}
+			} else {
+				continue
 			}
 			repo.RecordImport(name)
 

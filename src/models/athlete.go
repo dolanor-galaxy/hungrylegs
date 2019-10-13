@@ -23,7 +23,7 @@ func OpenAthlete(name string) *Athlete {
 	}
 
 	// Open the database and apply migrations is needed
-	db, err := a.openDatabase()
+	db, err := openDatabase(&a)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,8 +31,13 @@ func OpenAthlete(name string) *Athlete {
 	return &a
 }
 
-func (a *Athlete) openDatabase() (*sql.DB, error) {
-	athletePath := filepath.Join("store", "athletes", a.FileSafeName+".db?cache=shared")
+// Close release the database and what not
+func (a *Athlete) Close() {
+	a.Db.Close()
+}
+
+func openDatabase(a *Athlete) (*sql.DB, error) {
+	athletePath := filepath.Join("store", "athletes", a.FileSafeName+".db")
 	// db, err := sql.Open("sqlite3", "file::memory:?cache=shared")
 	db, err := sql.Open("sqlite3", athletePath)
 	if err != nil {
@@ -53,7 +58,7 @@ func (a *Athlete) openDatabase() (*sql.DB, error) {
 	}
 
 	// Ensure the database is up2date
-	err = a.updateAthleteStore(db)
+	err = updateAthleteStore(a, db)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -61,7 +66,7 @@ func (a *Athlete) openDatabase() (*sql.DB, error) {
 	return db, nil
 }
 
-func (a *Athlete) updateAthleteStore(db *sql.DB) error {
+func updateAthleteStore(a *Athlete, db *sql.DB) error {
 	migrations := &migrate.FileMigrationSource{
 		Dir: "migrations",
 	}

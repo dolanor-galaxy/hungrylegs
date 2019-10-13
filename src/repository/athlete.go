@@ -8,16 +8,13 @@ import (
 	"github.com/therohans/HungryLegs/src/models"
 )
 
-var (
+type AthleteRepository struct {
+	Db                 *sql.DB
 	hasImportedQuery   *sql.Stmt
 	recordImportQuery  *sql.Stmt
 	addActivityQuery   *sql.Stmt
 	addLapQuery        *sql.Stmt
 	addTrackPointQuery *sql.Stmt
-)
-
-type AthleteRepository struct {
-	Db *sql.DB
 }
 
 func prepareQuery(query string, db *sql.DB) *sql.Stmt {
@@ -28,43 +25,42 @@ func prepareQuery(query string, db *sql.DB) *sql.Stmt {
 	return stmt
 }
 
-// NewAthleteRepository creates a new repository and sets up needed bits
-func NewAthleteRepository(athlete *models.Athlete) *AthleteRepository {
+// Attach creates a new repository and sets up needed bits
+func Attach(athlete *models.Athlete) *AthleteRepository {
 	db := athlete.Db
 	a := AthleteRepository{
 		Db: db,
 	}
 
-	if hasImportedQuery == nil {
-		hasImportedQuery = prepareQuery(`
-			SELECT id FROM FileImport WHERE file_name = ?
-		`, db)
+	a.hasImportedQuery = prepareQuery(`
+		SELECT id FROM FileImport WHERE file_name = ?
+	`, db)
 
-		recordImportQuery = prepareQuery(`
-			INSERT INTO FileImport (
-				import_time, 'file_name'
-			) VALUES (?, ?)
-		`, db)
+	a.recordImportQuery = prepareQuery(`
+		INSERT INTO FileImport (
+			import_time, 'file_name'
+		) VALUES (?, ?)
+	`, db)
 
-		addActivityQuery = prepareQuery(`
-			INSERT INTO Activity (
-				uuid, full_uuid, sport, 'time', device
-			) VALUES (?, ?, ?, ?, ?)
-		`, db)
+	a.addActivityQuery = prepareQuery(`
+		INSERT INTO Activity (
+			uuid, full_uuid, sport, 'time', device
+		) VALUES (?, ?, ?, ?, ?)
+	`, db)
 
-		addLapQuery = prepareQuery(`
-			INSERT INTO Lap (
-				'time', 'start', total_time, dist, calories, max_speed, 
-				avg_hr, max_hr, intensity, trigger, activity_id
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		`, db)
+	a.addLapQuery = prepareQuery(`
+		INSERT INTO Lap (
+			'time', 'start', total_time, dist, calories, max_speed, 
+			avg_hr, max_hr, intensity, trigger, activity_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, db)
 
-		addTrackPointQuery = prepareQuery(`
-			INSERT INTO TrackPoint (
-				'time', lat, long, alt, dist, hr, cad, speed, 'power', activity_id
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		`, db)
-	}
+	a.addTrackPointQuery = prepareQuery(`
+		INSERT INTO TrackPoint (
+			'time', lat, long, alt, dist, hr, cad, speed, 'power', activity_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, db)
+
 	return &a
 }
 
@@ -73,7 +69,7 @@ func (r *AthleteRepository) Begin() (*sql.Tx, error) {
 }
 
 func (r *AthleteRepository) HasImported(file string) (bool, error) {
-	res, err := hasImportedQuery.Query(file)
+	res, err := r.hasImportedQuery.Query(file)
 	defer res.Close()
 
 	if err != nil {
@@ -84,7 +80,7 @@ func (r *AthleteRepository) HasImported(file string) (bool, error) {
 }
 
 func (r *AthleteRepository) RecordImport(file string) error {
-	_, err := recordImportQuery.Exec(time.Now(), file)
+	_, err := r.recordImportQuery.Exec(time.Now(), file)
 	if err != nil {
 		return err
 	}
@@ -92,7 +88,7 @@ func (r *AthleteRepository) RecordImport(file string) error {
 }
 
 func (r *AthleteRepository) AddActivity(act *models.Activity) (int64, error) {
-	res, err := addActivityQuery.Exec(
+	res, err := r.addActivityQuery.Exec(
 		act.UUID, act.FullUUID, act.Sport, act.ID, act.Creator.Name)
 	if err != nil {
 		return -1, err
@@ -105,7 +101,7 @@ func (r *AthleteRepository) AddActivity(act *models.Activity) (int64, error) {
 }
 
 func (r *AthleteRepository) AddLap(activityID int64, lap *models.Lap) (int64, error) {
-	res, err := addLapQuery.Exec(
+	res, err := r.addLapQuery.Exec(
 		lap.Time, lap.Start, lap.TotalTime, lap.Dist, lap.Calories, lap.MaxSpeed,
 		lap.AvgHr, lap.MaxHr, lap.Intensity, lap.TriggerMethod, activityID,
 	)
@@ -120,7 +116,7 @@ func (r *AthleteRepository) AddLap(activityID int64, lap *models.Lap) (int64, er
 }
 
 func (r *AthleteRepository) AddTrackPoint(activityID int64, tp *models.Trackpoint) (int64, error) {
-	res, err := addTrackPointQuery.Exec(
+	res, err := r.addTrackPointQuery.Exec(
 		tp.Time, tp.Lat, tp.Long, tp.Alt, tp.Dist,
 		tp.HR, tp.Cad, tp.Speed, tp.Power, activityID,
 	)
