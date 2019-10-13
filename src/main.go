@@ -20,11 +20,24 @@ type Athlete struct {
 }
 
 func (a *Athlete) OpenAthlete() (*sql.DB, error) {
-	athletePath := filepath.Join("store", "athletes", a.Name+".db")
+	athletePath := filepath.Join("store", "athletes", a.Name+".db?cache=shared")
+	// db, err := sql.Open("sqlite3", "file::memory:?cache=shared")
 	db, err := sql.Open("sqlite3", athletePath)
 	if err != nil {
 		log.Printf("Failed to open athlete store")
 		return nil, err
+	}
+	_, err = db.Exec("PRAGMA synchronous = OFF")
+	if err != nil {
+		log.Printf("%v\n", err.Error())
+	}
+	_, err = db.Exec("PRAGMA journal_mode = MEMORY")
+	if err != nil {
+		log.Printf("%v\n", err.Error())
+	}
+	_, err = db.Exec("PRAGMA cache_size = -16000")
+	if err != nil {
+		log.Printf("%v\n", err.Error())
 	}
 	return db, nil
 }
@@ -85,9 +98,7 @@ func main() {
 	}
 
 	// Put the API on top of the connection
-	repo := repository.AthleteRepository{
-		Db: db,
-	}
+	repo := repository.NewAthleteRepository(db)
 
-	importer.ImportNewActivity(config, &repo)
+	importer.ImportNewActivity(config, repo)
 }

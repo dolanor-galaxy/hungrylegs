@@ -2,13 +2,67 @@ package repository
 
 import (
 	"database/sql"
+	"log"
 	"time"
 
 	"github.com/therohans/HungryLegs/src/models"
 )
 
+var (
+	hasImportedQuery   *sql.Stmt
+	recordImportQuery  *sql.Stmt
+	addActivityQuery   *sql.Stmt
+	addLapQuery        *sql.Stmt
+	addTrackPointQuery *sql.Stmt
+)
+
 type AthleteRepository struct {
 	Db *sql.DB
+}
+
+func prepareQuery(query string, db *sql.DB) *sql.Stmt {
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return stmt
+}
+
+// NewAthleteRepository creates a new repository and sets up needed bits
+func NewAthleteRepository(db *sql.DB) *AthleteRepository {
+	a := AthleteRepository{db}
+
+	if hasImportedQuery == nil {
+		hasImportedQuery = prepareQuery(`
+			SELECT id FROM FileImport WHERE file_name = ?
+		`, db)
+
+		recordImportQuery = prepareQuery(`
+			INSERT INTO FileImport (
+				import_time, 'file_name'
+			) VALUES (?, ?)
+		`, db)
+
+		addActivityQuery = prepareQuery(`
+			INSERT INTO Activity (
+				uuid, full_uuid, sport, 'time', device
+			) VALUES (?, ?, ?, ?, ?)
+		`, db)
+
+		addLapQuery = prepareQuery(`
+			INSERT INTO Lap (
+				'time', 'start', total_time, dist, calories, max_speed, 
+				avg_hr, max_hr, intensity, trigger, activity_id
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`, db)
+
+		addTrackPointQuery = prepareQuery(`
+			INSERT INTO TrackPoint (
+				'time', lat, long, alt, dist, hr, cad, speed, 'power', activity_id
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`, db)
+	}
+	return &a
 }
 
 func (r *AthleteRepository) Begin() (*sql.Tx, error) {
@@ -16,13 +70,7 @@ func (r *AthleteRepository) Begin() (*sql.Tx, error) {
 }
 
 func (r *AthleteRepository) HasImported(file string) (bool, error) {
-	statement, err := r.Db.Prepare(`
-		SELECT id FROM FileImport WHERE file_name = ?
-	`)
-	if err != nil {
-		return false, err
-	}
-	res, err := statement.Query(file)
+	res, err := hasImportedQuery.Query(file)
 	defer res.Close()
 
 	if err != nil {
@@ -33,16 +81,7 @@ func (r *AthleteRepository) HasImported(file string) (bool, error) {
 }
 
 func (r *AthleteRepository) RecordImport(file string) error {
-	statement, err := r.Db.Prepare(`
-		INSERT INTO FileImport (
-			import_time, 'file_name'
-		) VALUES (?, ?)
-	`)
-	defer statement.Close()
-	if err != nil {
-		return err
-	}
-	_, err = statement.Exec(time.Now(), file)
+	_, err := recordImportQuery.Exec(time.Now(), file)
 	if err != nil {
 		return err
 	}
@@ -50,16 +89,8 @@ func (r *AthleteRepository) RecordImport(file string) error {
 }
 
 func (r *AthleteRepository) AddActivity(act *models.Activity) (int64, error) {
-	statement, err := r.Db.Prepare(`
-		INSERT INTO Activity (
-			sport, 'time', device
-		) VALUES (?, ?, ?)
-	`)
-	defer statement.Close()
-	if err != nil {
-		return -1, err
-	}
-	res, err := statement.Exec(act.Sport, act.ID, act.Creator.Name)
+	res, err := addActivityQuery.Exec(
+		act.UUID, act.FullUUID, act.Sport, act.ID, act.Creator.Name)
 	if err != nil {
 		return -1, err
 	}
@@ -71,18 +102,8 @@ func (r *AthleteRepository) AddActivity(act *models.Activity) (int64, error) {
 }
 
 func (r *AthleteRepository) AddLap(activityID int64, lap *models.Lap) (int64, error) {
-	statement, err := r.Db.Prepare(`
-		INSERT INTO Lap (
-			'start', total_time, dist, calories, max_speed, 
-			avg_hr, max_hr, intensity, trigger, activity_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`)
-	defer statement.Close()
-	if err != nil {
-		return -1, err
-	}
-	res, err := statement.Exec(
-		lap.Start, lap.TotalTime, lap.Dist, lap.Calories, lap.MaxSpeed,
+	res, err := addLapQuery.Exec(
+		lap.Time, lap.Start, lap.TotalTime, lap.Dist, lap.Calories, lap.MaxSpeed,
 		lap.AvgHr, lap.MaxHr, lap.Intensity, lap.TriggerMethod, activityID,
 	)
 	if err != nil {
@@ -95,19 +116,10 @@ func (r *AthleteRepository) AddLap(activityID int64, lap *models.Lap) (int64, er
 	return id, nil
 }
 
-func (r *AthleteRepository) AddTrackPoint(lapID int64, tp *models.Trackpoint) (int64, error) {
-	statement, err := r.Db.Prepare(`
-		INSERT INTO TrackPoint (
-			'time', lat, long, alt, dist, hr, cad, speed, 'power', lap_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`)
-	defer statement.Close()
-	if err != nil {
-		return -1, err
-	}
-	res, err := statement.Exec(
+func (r *AthleteRepository) AddTrackPoint(activityID int64, tp *models.Trackpoint) (int64, error) {
+	res, err := addTrackPointQuery.Exec(
 		tp.Time, tp.Lat, tp.Long, tp.Alt, tp.Dist,
-		tp.HR, tp.Cad, tp.Speed, tp.Power, lapID,
+		tp.HR, tp.Cad, tp.Speed, tp.Power, activityID,
 	)
 	if err != nil {
 		return -1, err

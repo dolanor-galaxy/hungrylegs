@@ -2,6 +2,8 @@ package importer
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -29,6 +31,7 @@ func ImportNewActivity(config *models.StaticConfig, repo *repository.AthleteRepo
 		name := f.Name()
 		name = strings.ToLower(name)
 
+		// Check if this file has already been imported
 		have, err := repo.HasImported(name)
 		if err != nil {
 			log.Fatal(err)
@@ -36,6 +39,7 @@ func ImportNewActivity(config *models.StaticConfig, repo *repository.AthleteRepo
 
 		if have == false {
 			start := time.Now()
+			// We only support tcx and fit files
 			if strings.HasSuffix(name, ".tcx") {
 				tcxFile := TcxFile{}
 				err := tcxFile.Import(filepath.Join(config.ImportDir, name), repo)
@@ -59,6 +63,16 @@ func ImportNewActivity(config *models.StaticConfig, repo *repository.AthleteRepo
 		}
 	}
 	log.Println("Done import")
+}
+
+// ActivityHash makes a mostly unique hash
+func ActivityHash(sport string, time time.Time, file string) string {
+	s := sport + "::" + string(time.Unix()) + "::" + file + "::hungrylegs"
+	h := sha1.New()
+	h.Write([]byte(s))
+	bs := h.Sum(nil)
+
+	return fmt.Sprintf("%x", bs)
 }
 
 ////////////////////////////////////
@@ -90,9 +104,13 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 
 		var activityID int64
 		for _, session := range activity.Sessions {
+			sport := session.Sport.String()
+			hash := ActivityHash(sport, session.Timestamp, file)
 			hlAct := models.Activity{
-				ID:    session.Timestamp,
-				Sport: session.Sport.String(),
+				ID:       session.Timestamp,
+				UUID:     hash[:8],
+				FullUUID: hash,
+				Sport:    sport,
 			}
 			activityID, err = repo.AddActivity(&hlAct)
 			if err != nil {
@@ -103,42 +121,42 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 
 		for _, lap := range activity.Laps {
 			hlLap := models.Lap{
+				Time:          lap.Timestamp,
 				Start:         lap.StartTime.String(),
-				TotalTime:     float64(lap.TotalElapsedTime / 1000),
-				Dist:          float64(lap.TotalDistance) / 100000,
+				TotalTime:     lap.GetTotalElapsedTimeScaled(),
+				Dist:          lap.GetTotalDistanceScaled(),
 				Calories:      float64(lap.TotalCalories),
-				MaxSpeed:      float64(lap.MaxSpeed),
+				MaxSpeed:      lap.GetMaxSpeedScaled(),
 				AvgHr:         float64(lap.AvgHeartRate),
 				MaxHr:         float64(lap.MaxHeartRate),
 				Intensity:     lap.Intensity.String(),
 				TriggerMethod: lap.LapTrigger.String(),
 			}
-			lapID, err := repo.AddLap(activityID, &hlLap)
+			_, err := repo.AddLap(activityID, &hlLap)
 			if err != nil {
 				tx.Rollback()
 				return err
 			}
-
-			for _, track := range activity.Records {
-				htTrack := models.Trackpoint{
-					Time:  track.Timestamp,
-					Lat:   track.PositionLat.Degrees(),
-					Long:  track.PositionLong.Degrees(),
-					Alt:   float64(track.Altitude),
-					Dist:  float64(track.Distance),
-					HR:    float64(track.HeartRate),
-					Cad:   float64(track.Cadence),
-					Speed: float64(track.Speed),
-					Power: float64(track.Power),
-				}
-				_, err := repo.AddTrackPoint(lapID, &htTrack)
-				if err != nil {
-					tx.Rollback()
-					return err
-				}
-			}
 		}
 
+		for _, track := range activity.Records {
+			htTrack := models.Trackpoint{
+				Time:  track.Timestamp,
+				Lat:   track.PositionLat.Degrees(),
+				Long:  track.PositionLong.Degrees(),
+				Alt:   track.GetAltitudeScaled(),
+				Dist:  track.GetDistanceScaled(),
+				HR:    float64(track.HeartRate),
+				Cad:   track.GetCadence256Scaled(),
+				Speed: track.GetSpeedScaled(),
+				Power: float64(track.Power),
+			}
+			_, err := repo.AddTrackPoint(activityID, &htTrack)
+			if err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
 		tx.Commit()
 	}
 
@@ -163,9 +181,12 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 		}
 
 		act := tcxdb.Acts.Act[i]
+		hash := ActivityHash(act.Sport, act.Id, file)
 		hlAct := models.Activity{
-			ID:    act.Id,
-			Sport: act.Sport,
+			ID:       act.Id,
+			UUID:     hash[:8],
+			FullUUID: hash,
+			Sport:    act.Sport,
 		}
 		activityID, err := repo.AddActivity(&hlAct)
 		if err != nil {
@@ -186,7 +207,7 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 				Intensity:     lap.Intensity,
 				TriggerMethod: lap.TriggerMethod,
 			}
-			lapID, err := repo.AddLap(activityID, &hlLap)
+			_, err := repo.AddLap(activityID, &hlLap)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -205,7 +226,7 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 					Speed: track.Speed,
 					Power: track.Power,
 				}
-				_, err := repo.AddTrackPoint(lapID, &htTrack)
+				_, err := repo.AddTrackPoint(activityID, &htTrack)
 				if err != nil {
 					tx.Rollback()
 					return err

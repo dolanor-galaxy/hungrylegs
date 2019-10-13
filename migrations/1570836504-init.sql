@@ -11,12 +11,13 @@ CREATE TABLE IF NOT EXISTS TrackPoint (
   cad     FLOAT,
   speed   FLOAT,
   `power` FLOAT,
-  lap_id INTEGER,
-  FOREIGN KEY(lap_id) REFERENCES Lap(id)
+  activity_id INTEGER,
+  FOREIGN KEY(activity_id) REFERENCES Activity(id)
 );
 
 CREATE TABLE IF NOT EXISTS Lap (
   id INTEGER PRIMARY KEY,
+  `time`      TEXT,
   start       TEXT,
   total_time  FLOAT,
   dist        FLOAT,
@@ -32,13 +33,16 @@ CREATE TABLE IF NOT EXISTS Lap (
 
 CREATE TABLE IF NOT EXISTS Activity (
   id INTEGER PRIMARY KEY,
+  uuid TEXT,
+  full_uuid TEXT,
   sport TEXT,
   `time` TEXT,
   device TEXT
 );
 
-CREATE INDEX idx_tp_lap ON TrackPoint(lap_id);
-CREATE INDEX idx_lap_act ON Lap(activity_id);
+CREATE INDEX idx_uuid ON Activity(uuid);
+CREATE UNIQUE INDEX idx_full_uuid ON Activity(full_uuid);
+CREATE INDEX idx_sport ON Activity(sport);
 
 -- Table to know if we've already imported something
 CREATE TABLE IF NOT EXISTS FileImport (
@@ -53,5 +57,6 @@ CREATE INDEX idx_file_name ON FileImport(`file_name`);
 DROP TABLE Trackpoint;
 DROP TABLE Lap;
 DROP TABLE Activity;
+DROP TABLE FileImport;
 
 -- DROP INDEX salary_index;
