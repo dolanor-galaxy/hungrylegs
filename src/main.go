@@ -41,6 +41,7 @@ func main() {
 	repo := repository.Attach(athlete)
 	// Launch the activity importer
 	importer.ImportActivites(config.ImportDir, repo)
+	importer.ImportActivity("9A2C0321.FIT", config.ImportDir, repo)
 
 	//////////////////////
 	athlete2 := models.OpenAthlete("Punkin Pie")

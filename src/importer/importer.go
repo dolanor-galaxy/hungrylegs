@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -21,10 +20,10 @@ type Importer interface {
 	Import(file string, repo repository.AthleteRepository) error
 }
 
-func ImportActivity(f os.FileInfo, directory string, repo *repository.AthleteRepository) error {
-	err := importFile(f, directory, repo)
+func ImportActivity(name string, directory string, repo *repository.AthleteRepository) error {
+	err := importFile(name, directory, repo)
 	if err != nil {
-		log.Printf("Error importing file: %v : %v", f, err.Error())
+		log.Printf("Error importing file: %v : %v", name, err.Error())
 		return err
 	}
 	return nil
@@ -38,7 +37,8 @@ func ImportActivites(directory string, repo *repository.AthleteRepository) error
 	}
 
 	for _, f := range files {
-		err = importFile(f, directory, repo)
+		name := f.Name()
+		err = importFile(name, directory, repo)
 		if err != nil {
 			log.Printf("Error importing file: %v : %v", f, err.Error())
 		}
@@ -47,10 +47,7 @@ func ImportActivites(directory string, repo *repository.AthleteRepository) error
 	return nil
 }
 
-func importFile(f os.FileInfo, directory string, repo *repository.AthleteRepository) error {
-	name := f.Name()
-	name = strings.ToLower(name)
-
+func importFile(name string, directory string, repo *repository.AthleteRepository) error {
 	// Check if this file has already been imported
 	have, err := repo.HasImported(name)
 	if err != nil {
@@ -59,14 +56,15 @@ func importFile(f os.FileInfo, directory string, repo *repository.AthleteReposit
 
 	if have == false {
 		start := time.Now()
+		lower := strings.ToLower(name)
 		// We only support tcx and fit files
-		if strings.HasSuffix(name, ".tcx") {
+		if strings.HasSuffix(lower, ".tcx") {
 			tcxFile := TcxFile{}
 			err := tcxFile.Import(filepath.Join(directory, name), repo)
 			if err != nil {
 				return err
 			}
-		} else if strings.HasSuffix(name, ".fit") {
+		} else if strings.HasSuffix(lower, ".fit") {
 			fitFile := FitFile{}
 			err := fitFile.Import(filepath.Join(directory, name), repo)
 			if err != nil {
@@ -98,7 +96,7 @@ func ActivityHash(sport string, time time.Time, file string) string {
 
 ////////////////////////////////////
 
-// FitFile represents a .fit file (standard garmin)
+// FitFile represents a .fit file (standard Garmin)
 type FitFile struct{}
 
 func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error {
