@@ -71,6 +71,32 @@ A slightly better approach than avg is based around Heart Rate zones. Instead of
 |     .90 |     1.0 |     5 |
 
 This approach works well if you are using a Heart Rate Monitor that will display the times spent in each zone, but without transferring the details to a computer for more sophisticated analysis. However, there are some serious flaws in this technique. The most obvious is that a small change in heart rate could move from one zone to another, which could double the TRIMP^zone score. The scaling factors are also linear, but moving from 50-60% HR\max to 60-70% is far less than doubling the difficulty. By contrast, exercising at 100% rather than 90% is far harder than the 0.25 increase scaling factor would suggest. Finally, using %HR\max is inferior to using Heart Rate Reserve.
+** TRIMP^exp Exponential Heart Rate Scaling
+A more sophisticated approach uses Heart Rate Reserve (see below) and an exponential scaling factor to account for the fact that higher intensity training as a disproportionately high training impact. The formula for calculating TRIMPexp is
+
+TRIMP^exp = sum(D x HR\r x 0.64e^y)
+
+Where
+
+- D is the duration in minutes at a particular Heart Rate
+- HR\r is the Heart Rate as a fraction of Heart Rate Reserve
+- y is the HRr multiplied by 1.92 for men and 1.67 for women
+
+These constants were developed based on the experimentally observed relationship between heart rate and lactate level. For men This will give a TRIMP value of:
+
+- Men: 0 to 4.37 per minute 
+- Women: 0 to 3.4 per minute
+
+*** Example
+An example would be a male athlete with a HR\max=200 and HR\rest=40 training for 30 min at 130 BPM. The TRIMP^exp is therefore
+
+TRIMP^exp = 30 * (130 - 40) / (200 - 40) * 0.64e^(1.92 * (130 - 40) / (200 - 40))
+
+Which simplifies to
+
+TRIMP^exp = 30 * 0.56 * 0.64e^(1.92 * 0.56)
+
+Which is a value of 32. This is obviously a simplified example as in reality an athlete heart rate will vary over time. To implement this algorithm requires a software package with access to the records of the heart rate. Thankfully modern Heart Rate Monitors makes this relatively trivial.
 
 ** Heart Rate Reserve (HRR)
 Heart Rate Reserve is a how much your Heart Rate can speed up with exercise. It's the difference between the fastest heart rate (Maximum Heart Rate) and the slowest (Resting Heart Rate.)
