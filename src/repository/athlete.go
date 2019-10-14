@@ -26,8 +26,7 @@ func prepareQuery(query string, db *sql.DB) *sql.Stmt {
 }
 
 // Attach creates a new repository and sets up needed bits
-func Attach(athlete *models.Athlete) *AthleteRepository {
-	db := athlete.Db
+func Attach(db *sql.DB) *AthleteRepository {
 	a := AthleteRepository{
 		Db: db,
 	}

@@ -1,0 +1,11 @@
+{
+  "import": "import",
+
+  "database": {
+    "driver": "postgres",
+    "connection": "host=postgres dbname=hungrylegs sslmode=disable user=postgres password=secret",
+    "post": [
+      "set search_path='{athlete}'"
+    ]
+  }
+}

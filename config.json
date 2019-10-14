@@ -1,3 +1,13 @@
 {
-  "import": "/Users/robrohan/Dropbox/Documents/Fitness/CheetahAthlete/Professor Zoom/imports"
+  "import": "import",
+
+  "database": {
+    "driver": "sqlite3",
+    "connection": "store/athletes/{athlete}.db",
+    "post": [
+      "PRAGMA synchronous = OFF",
+      "PRAGMA journal_mode = MEMORY",
+      "PRAGMA cache_size = -16000"
+    ]
+  }
 }
