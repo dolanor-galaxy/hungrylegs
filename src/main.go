@@ -7,28 +7,13 @@ import (
 	"os"
 	"strings"
 
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	migrate "github.com/rubenv/sql-migrate"
 	"github.com/therohans/HungryLegs/src/importer"
 	"github.com/therohans/HungryLegs/src/models"
 	"github.com/therohans/HungryLegs/src/repository"
 )
-
-func loadConfig(file string) (*models.StaticConfig, error) {
-	var config models.StaticConfig
-	configFile, err := os.Open(file)
-	defer configFile.Close()
-	if err != nil {
-		log.Printf("Opening config file failed %v\n", err.Error())
-		return nil, err
-	}
-	jsonParser := json.NewDecoder(configFile)
-	jsonParser.Decode(&config)
-
-	return &config, nil
-}
-
-/////////////////////////////////////////////////////
 
 func main() {
 	log.Printf("Starting HungryLegs...")
@@ -46,22 +31,32 @@ func main() {
 	}
 	defer db.Close()
 
-	// defer athlete.Close()
 	// Put the API on top of the connection
 	repo := repository.Attach(db)
 
 	// Launch the activity importer
 	importer.ImportActivites(config.ImportDir, repo)
-
-	//////////////////////
-	// athlete2 := models.OpenAthlete("Punkin Pie")
-	// defer athlete2.Close()
-	// // Put the API on top of the connection
-	// repo2 := repository.Attach(athlete2)
-	// // Launch the activity importer
-	// importer.ImportActivites(config.ImportDir, repo2)
 }
 
+/////////////////////////////////////////////////////
+
+func loadConfig(file string) (*models.StaticConfig, error) {
+	var config models.StaticConfig
+	configFile, err := os.Open(file)
+	defer configFile.Close()
+	if err != nil {
+		log.Printf("Opening config file failed %v\n", err.Error())
+		return nil, err
+	}
+	jsonParser := json.NewDecoder(configFile)
+	jsonParser.Decode(&config)
+
+	return &config, nil
+}
+
+/////////////////////////////////////////////////////
+
+// Open up the database connection
 func openDatabase(config *models.StaticConfig, a *models.Athlete) (*sql.DB, error) {
 	conn := strings.ReplaceAll(config.Database.Connection, "{athlete}", a.FileSafeName)
 	db, err := sql.Open(config.Database.Driver, conn)
@@ -87,6 +82,7 @@ func openDatabase(config *models.StaticConfig, a *models.Athlete) (*sql.DB, erro
 	return db, nil
 }
 
+// Run any migrations that need to run
 func updateAthleteStore(config *models.StaticConfig, db *sql.DB) error {
 	migrations := &migrate.FileMigrationSource{
 		Dir: "migrations",

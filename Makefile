@@ -19,7 +19,7 @@ build:
 	mkdir build
 	CGO_ENABLED=1 go build -o hungrylegs src/main.go 
 	mv ./hungrylegs build/
-	cp ./config.json build/
+	cp ./config.prod.json build/config.json
 	cp -R ./store/ build/
-	mkdir build/import
+	cp -R ./import/ build/
 	cp -R ./migrations/ build/

@@ -3,7 +3,7 @@
 
   "database": {
     "driver": "postgres",
-    "connection": "host=postgres dbname=hungrylegs sslmode=disable user=postgres password=secret",
+    "connection": "host=db port=5432 user=postgres dbname=postgres password=postgres sslmode=disable",
     "post": [
       "set search_path='{athlete}'"
     ]

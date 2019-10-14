@@ -8,6 +8,7 @@ require (
 	github.com/gordonklaus/ineffassign v0.0.0-20190601041439-ed7b1b5ee0f8 // indirect
 	github.com/kortschak/utter v0.0.0-20190412033250-50fe362e6560 // indirect
 	github.com/kr/pty v1.1.8 // indirect
+	github.com/lib/pq v1.2.0
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/mdempsky/unconvert v0.0.0-20190921185256-3ecd357795af // indirect
 	github.com/rogpeppe/go-internal v1.5.0 // indirect

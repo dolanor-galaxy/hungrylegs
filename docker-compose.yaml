@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: 'postgres'
+    volumes:
+      - database_data:/var/lib/postgresql/data
+
+  hungrylegs:
+    build: .
+    expose:
+      - 8080
+    ports:
+      - 8080:8080
+    # volumes:
+    #   - ./api:/usr/src/app/
+    links:
+      - db
+    # environment:
+    #   - PGHOST: 'db'
+    #   - PGDATABASE: 'postgres'
+    #   - PGUSER: 'postgres'
+    #   - PGPASSWORD: 'postgres'
+
+volumes:
+  database_data:
+    driver: local
