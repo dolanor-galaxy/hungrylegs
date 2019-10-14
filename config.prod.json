@@ -5,6 +5,7 @@
     "driver": "postgres",
     "connection": "host=db port=5432 user=postgres dbname=postgres password=postgres sslmode=disable",
     "post": [
+      "CREATE SCHEMA IF NOT EXISTS \"{athlete}\"",
       "set search_path='{athlete}'"
     ]
   }

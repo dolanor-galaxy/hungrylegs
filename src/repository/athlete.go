@@ -32,30 +32,30 @@ func Attach(db *sql.DB) *AthleteRepository {
 	}
 
 	a.hasImportedQuery = prepareQuery(`
-		SELECT id FROM FileImport WHERE file_name = ?
+		SELECT id FROM fileimport WHERE file_name = ?
 	`, db)
 
 	a.recordImportQuery = prepareQuery(`
-		INSERT INTO FileImport (
+		INSERT INTO fileimport (
 			import_time, 'file_name'
 		) VALUES (?, ?)
 	`, db)
 
 	a.addActivityQuery = prepareQuery(`
-		INSERT INTO Activity (
+		INSERT INTO activity (
 			uuid, full_uuid, sport, 'time', device
 		) VALUES (?, ?, ?, ?, ?)
 	`, db)
 
 	a.addLapQuery = prepareQuery(`
-		INSERT INTO Lap (
+		INSERT INTO lap (
 			'time', 'start', total_time, dist, calories, max_speed, 
 			avg_hr, max_hr, intensity, trigger, activity_id
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, db)
 
 	a.addTrackPointQuery = prepareQuery(`
-		INSERT INTO TrackPoint (
+		INSERT INTO trackpoint (
 			'time', lat, long, alt, dist, hr, cad, speed, 'power', activity_id
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, db)
