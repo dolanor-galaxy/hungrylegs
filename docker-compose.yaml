@@ -17,15 +17,17 @@ services:
       - 8080
     ports:
       - 8080:8080
+    depends_on:
+      - db
     # volumes:
     #   - ./api:/usr/src/app/
     links:
       - db
-    # environment:
-    #   - PGHOST: 'db'
-    #   - PGDATABASE: 'postgres'
-    #   - PGUSER: 'postgres'
-    #   - PGPASSWORD: 'postgres'
+    environment:
+      PGHOST: 'db'
+      PGDATABASE: 'postgres'
+      PGUSER: 'postgres'
+      PGPASSWORD: 'postgres'
 
 volumes:
   database_data:

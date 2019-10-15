@@ -1,17 +1,16 @@
 -- +migrate Up
 -- SQL in section 'Up' is executed when this migration is applied
 CREATE TABLE IF NOT EXISTS activity (
-  id INTEGER PRIMARY KEY,
   uuid TEXT,
-  full_uuid TEXT,
+  suuid TEXT,
   sport TEXT,
   "time" TEXT,
-  device TEXT
+  device TEXT,
+  UNIQUE(uuid)
 );
 
 CREATE TABLE IF NOT EXISTS trackpoint (
-  id INTEGER PRIMARY KEY,
-  "time"  TEXT,
+  "time"  TEXT,    -- time is the pk for this table
   lat     FLOAT,
 	long    FLOAT,
   alt     FLOAT,
@@ -20,13 +19,12 @@ CREATE TABLE IF NOT EXISTS trackpoint (
   cad     FLOAT,
   speed   FLOAT,
   "power" FLOAT,
-  activity_id INTEGER,
-  FOREIGN KEY(activity_id) REFERENCES activity(id)
+  activity_uuid TEXT,
+  FOREIGN KEY(activity_uuid) REFERENCES activity(uuid)
 );
 
-CREATE TABLE IF NOT EXISTS Lap (
-  id INTEGER PRIMARY KEY,
-  "time"      TEXT,
+CREATE TABLE IF NOT EXISTS lap (
+  "time"      TEXT, -- time is the pk for this table
   start       TEXT,
   total_time  FLOAT,
   dist        FLOAT,
@@ -36,17 +34,20 @@ CREATE TABLE IF NOT EXISTS Lap (
   max_hr      FLOAT,
   intensity   TEXT,
   trigger     TEXT,
-  activity_id INTEGER,
-  FOREIGN KEY(activity_id) REFERENCES activity(id)
+  activity_uuid TEXT,
+  FOREIGN KEY(activity_uuid) REFERENCES activity(uuid)
 );
 
-CREATE INDEX idx_uuid ON activity(uuid);
-CREATE UNIQUE INDEX idx_full_uuid ON activity(full_uuid);
-CREATE INDEX idx_sport ON activity(sport);
+CREATE UNIQUE INDEX idx_act_uuid ON activity(uuid);
+CREATE UNIQUE INDEX idx_act_suuid ON activity(suuid);
+CREATE INDEX idx_act_sport ON activity(sport);
+CREATE INDEX idx_act_time ON activity("time");
+
+CREATE UNIQUE INDEX idx_tp_time ON trackpoint("time");
+CREATE UNIQUE INDEX idx_lap_time ON lap("time");
 
 -- Table to know if we've already imported something
 CREATE TABLE IF NOT EXISTS fileimport (
-  id INTEGER PRIMARY KEY,
   import_time  TEXT,
   "file_name"  TEXT
 );

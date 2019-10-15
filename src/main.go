@@ -32,7 +32,7 @@ func main() {
 	defer db.Close()
 
 	// Put the API on top of the connection
-	repo := repository.Attach(db)
+	repo := repository.Attach(rootAthlete, db, config)
 
 	// Launch the activity importer
 	importer.ImportActivites(config.ImportDir, repo)

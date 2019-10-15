@@ -121,17 +121,17 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 			return err
 		}
 
-		var activityID int64
+		var hlAct models.Activity
 		for _, session := range activity.Sessions {
 			sport := session.Sport.String()
 			hash := ActivityHash(sport, session.Timestamp, file)
-			hlAct := models.Activity{
+			hlAct = models.Activity{
 				ID:       session.Timestamp,
 				UUID:     hash[:8],
 				FullUUID: hash,
 				Sport:    sport,
 			}
-			activityID, err = repo.AddActivity(&hlAct)
+			err = repo.AddActivity(&hlAct)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -151,7 +151,7 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 				Intensity:     lap.Intensity.String(),
 				TriggerMethod: lap.LapTrigger.String(),
 			}
-			_, err := repo.AddLap(activityID, &hlLap)
+			err := repo.AddLap(&hlAct, &hlLap)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -170,7 +170,7 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 				Speed: track.GetSpeedScaled(),
 				Power: float64(track.Power),
 			}
-			_, err := repo.AddTrackPoint(activityID, &htTrack)
+			err := repo.AddTrackPoint(&hlAct, &htTrack)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -207,7 +207,7 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 			FullUUID: hash,
 			Sport:    act.Sport,
 		}
-		activityID, err := repo.AddActivity(&hlAct)
+		err = repo.AddActivity(&hlAct)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -226,7 +226,7 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 				Intensity:     lap.Intensity,
 				TriggerMethod: lap.TriggerMethod,
 			}
-			_, err := repo.AddLap(activityID, &hlLap)
+			err := repo.AddLap(&hlAct, &hlLap)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -246,7 +246,7 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 						Speed: track.Speed,
 						Power: track.Power,
 					}
-					_, err := repo.AddTrackPoint(activityID, &htTrack)
+					err := repo.AddTrackPoint(&hlAct, &htTrack)
 					if err != nil {
 						tx.Rollback()
 						return err

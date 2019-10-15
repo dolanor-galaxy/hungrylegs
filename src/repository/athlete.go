@@ -2,13 +2,17 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/therohans/HungryLegs/src/models"
 )
 
 type AthleteRepository struct {
+	Athlete            *models.Athlete
 	Db                 *sql.DB
 	hasImportedQuery   *sql.Stmt
 	recordImportQuery  *sql.Stmt
@@ -25,40 +29,54 @@ func prepareQuery(query string, db *sql.DB) *sql.Stmt {
 	return stmt
 }
 
+var re = regexp.MustCompile(`(\$[0-9]+)`)
+
+func sqlForDriver(query string, config *models.StaticConfig) string {
+	if config.Database.Driver == "sqlite3" {
+		noSchema := strings.ReplaceAll(query, "\"%v\".", "")
+		placeholders := re.ReplaceAllString(noSchema, "?")
+		// We need to add the schema back somehow to the sprintfs
+		// don't fail
+		return placeholders + "\n -- %v\n"
+	}
+	return query
+}
+
 // Attach creates a new repository and sets up needed bits
-func Attach(db *sql.DB) *AthleteRepository {
+func Attach(athlete *models.Athlete, db *sql.DB, config *models.StaticConfig) *AthleteRepository {
 	a := AthleteRepository{
-		Db: db,
+		Athlete: athlete,
+		Db:      db,
 	}
 
-	a.hasImportedQuery = prepareQuery(`
-		SELECT id FROM fileimport WHERE file_name = ?
-	`, db)
+	a.hasImportedQuery = prepareQuery(fmt.Sprintf(sqlForDriver(`
+		SELECT import_time FROM "%v".fileimport WHERE file_name = $1
+	`, config), athlete.Name), db)
 
-	a.recordImportQuery = prepareQuery(`
-		INSERT INTO fileimport (
-			import_time, 'file_name'
-		) VALUES (?, ?)
-	`, db)
+	a.recordImportQuery = prepareQuery(fmt.Sprintf(sqlForDriver(`
+		INSERT INTO "%v".fileimport (
+			import_time, "file_name"
+		) VALUES ($1, $2)
+	`, config), athlete.Name), db)
 
-	a.addActivityQuery = prepareQuery(`
-		INSERT INTO activity (
-			uuid, full_uuid, sport, 'time', device
-		) VALUES (?, ?, ?, ?, ?)
-	`, db)
+	a.addActivityQuery = prepareQuery(fmt.Sprintf(sqlForDriver(`
+		INSERT INTO "%v".activity (
+			uuid, suuid, sport, "time", device
+		) VALUES ($1, $2, $3, $4, $5)
+	`, config), athlete.Name), db)
 
-	a.addLapQuery = prepareQuery(`
-		INSERT INTO lap (
-			'time', 'start', total_time, dist, calories, max_speed, 
-			avg_hr, max_hr, intensity, trigger, activity_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, db)
+	a.addLapQuery = prepareQuery(fmt.Sprintf(sqlForDriver(`
+		INSERT INTO "%v".lap (
+			"time", "start", total_time, dist, calories, max_speed,
+			avg_hr, max_hr, intensity, trigger, activity_uuid
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	`, config), athlete.Name), db)
 
-	a.addTrackPointQuery = prepareQuery(`
-		INSERT INTO trackpoint (
-			'time', lat, long, alt, dist, hr, cad, speed, 'power', activity_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, db)
+	a.addTrackPointQuery = prepareQuery(fmt.Sprintf(sqlForDriver(`
+		INSERT INTO "%v".trackpoint (
+			"time", lat, long, alt, dist, hr, cad, speed, "power", activity_uuid
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`, config), athlete.Name), db)
 
 	return &a
 }
@@ -86,47 +104,35 @@ func (r *AthleteRepository) RecordImport(file string) error {
 	return nil
 }
 
-func (r *AthleteRepository) AddActivity(act *models.Activity) (int64, error) {
-	res, err := r.addActivityQuery.Exec(
-		act.UUID, act.FullUUID, act.Sport, act.ID, act.Creator.Name)
+func (r *AthleteRepository) AddActivity(act *models.Activity) error {
+	_, err := r.addActivityQuery.Exec(
+		act.FullUUID, act.UUID, act.Sport, act.ID, act.Creator.Name)
 	if err != nil {
-		return -1, err
+		return err
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return -1, err
-	}
-	return id, nil
+	return nil
 }
 
-func (r *AthleteRepository) AddLap(activityID int64, lap *models.Lap) (int64, error) {
-	res, err := r.addLapQuery.Exec(
+func (r *AthleteRepository) AddLap(act *models.Activity, lap *models.Lap) error {
+	_, err := r.addLapQuery.Exec(
 		lap.Time, lap.Start, lap.TotalTime, lap.Dist, lap.Calories, lap.MaxSpeed,
-		lap.AvgHr, lap.MaxHr, lap.Intensity, lap.TriggerMethod, activityID,
+		lap.AvgHr, lap.MaxHr, lap.Intensity, lap.TriggerMethod, act.FullUUID,
 	)
 	if err != nil {
-		return -1, err
+		return err
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return -1, err
-	}
-	return id, nil
+	return nil
 }
 
-func (r *AthleteRepository) AddTrackPoint(activityID int64, tp *models.Trackpoint) (int64, error) {
-	res, err := r.addTrackPointQuery.Exec(
+func (r *AthleteRepository) AddTrackPoint(act *models.Activity, tp *models.Trackpoint) error {
+	_, err := r.addTrackPointQuery.Exec(
 		tp.Time, tp.Lat, tp.Long, tp.Alt, tp.Dist,
-		tp.HR, tp.Cad, tp.Speed, tp.Power, activityID,
+		tp.HR, tp.Cad, tp.Speed, tp.Power, act.FullUUID,
 	)
 	if err != nil {
-		return -1, err
+		return err
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return -1, err
-	}
-	return id, nil
+	return nil
 }
 
 func (r *AthleteRepository) GetActivities(start time.Time, end time.Time) ([]*models.Activity, error) {
