@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -17,9 +18,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("%v\n", config)
 
-	rootAthlete := models.NewAthlete("Professor Zoom")
+	log.Printf("Creating root athlete...")
+	rootAthlete := models.NewAthlete(config.RootAthlete)
 	db, err := repository.OpenDatabase(config, rootAthlete)
 	if err != nil {
 		log.Fatal(err)
@@ -29,6 +30,11 @@ func main() {
 	// Put the API on top of the connection
 	repo := repository.Attach(rootAthlete, db, config)
 
+	log.Printf("Starting import...")
+	start := time.Now()
 	// Launch the activity importer
 	importer.ImportActivites(config.ImportDir, repo)
+	t := time.Now()
+	elapsed := t.Sub(start)
+	log.Printf("Full import took %v", elapsed)
 }
