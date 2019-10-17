@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/therohans/HungryLegs/src/models"
-	"github.com/therohans/HungryLegs/src/repository"
-	"github.com/therohans/HungryLegs/src/tcx"
+	"github.com/therohans/HungryLegs/internal/models"
+	"github.com/therohans/HungryLegs/internal/repository"
+	"github.com/therohans/HungryLegs/internal/tcx"
 	"github.com/tormoder/fit"
 )
 
@@ -215,7 +215,9 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 
 		for l := range act.Laps {
 			lap := act.Laps[l]
+			time, _ := time.Parse(time.RFC3339, lap.Start)
 			hlLap := models.Lap{
+				Time:          time,
 				Start:         lap.Start,
 				TotalTime:     lap.TotalTime,
 				Dist:          lap.Dist,

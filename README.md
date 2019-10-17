@@ -1,3 +1,3 @@
-# HungryLegs
+# HungryLegs 🏊🏻‍🚴‍🏃‍
 
-HungryLegs is my own personal TrainingPeaks.
+HungryLegs is your own personal TrainingPeaks.

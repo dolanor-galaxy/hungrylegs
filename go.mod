@@ -5,7 +5,9 @@ go 1.12
 require (
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/creack/pty v1.1.9 // indirect
+	github.com/gobuffalo/packr v1.30.1 // indirect
 	github.com/gordonklaus/ineffassign v0.0.0-20190601041439-ed7b1b5ee0f8 // indirect
+	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/kortschak/utter v0.0.0-20190412033250-50fe362e6560 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lib/pq v1.2.0
