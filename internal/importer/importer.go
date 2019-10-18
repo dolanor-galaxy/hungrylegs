@@ -127,7 +127,7 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 			hash := ActivityHash(sport, session.Timestamp, file)
 			hlAct = models.Activity{
 				ID:       session.Timestamp,
-				UUID:     hash[:8],
+				UUID:     hash[:10],
 				FullUUID: hash,
 				Sport:    sport,
 			}
