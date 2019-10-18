@@ -3,6 +3,7 @@ module github.com/therohans/HungryLegs
 go 1.12
 
 require (
+	github.com/99designs/gqlgen v0.10.1
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/creack/pty v1.1.9 // indirect
 	github.com/gobuffalo/packr v1.30.1 // indirect
@@ -17,6 +18,7 @@ require (
 	github.com/rubenv/sql-migrate v0.0.0-20190902133344-8926f37f0bc1
 	github.com/tealeg/xlsx v1.0.5 // indirect
 	github.com/tormoder/fit v0.4.0
+	github.com/vektah/gqlparser v1.1.2
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8 // indirect
 	golang.org/x/lint v0.0.0-20190930215403-16217165b5de // indirect

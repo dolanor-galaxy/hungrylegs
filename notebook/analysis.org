@@ -3,35 +3,47 @@
 #+DATE: Oct 13, 2019
 
 * Activity Listing
-Basic Activity list
+  :PROPERTIES:
+  :header-args:sqliteold: :dir ../store/athletes :db UHJvZmVzc29yIFpvb20=.db :colnames yes
+  :header-args:sqlite: :dir /Users/robrohan/Desktop :db professor_zoom.db :colnames yes
+  :header-args:sql: :engine postgresql :dbhost 127.0.0.1 :dbuser postgres :dbpassword postgres :database postgres
+  :END:
+** Basic Activity list
 
 #+name: actvity_list
-#+begin_src sqlite :dir ../store/athletes :db UHJvZmVzc29yIFpvb20=.db
+#+begin_src sqlite
 select 
-	a.id,
-	a.sport,
-	sum(l.dist) / 1000 as km,
-	date(a.time)
-from Activity a
-join lap l on a.id = l.activity_id
+  a.suuid,
+  a.sport,
+  sum(l.dist) / 1000 as km,
+  date(a.time)
+from activity a
+join lap l on a.uuid = l.activity_uuid
 group by a.uuid
 order by a.time desc, sum(l.dist) desc
 limit 10
 #+end_src
 
 #+RESULTS: actvity_list
-| 271 | Running | 5.03978 | 2019-10-12 |
-| 270 | Running |  3.2164 | 2019-10-10 |
-| 269 | Running |  3.3995 | 2019-10-08 |
-| 268 | Running | 3.58449 | 2019-10-06 |
-| 267 | Running | 3.82884 | 2019-10-06 |
-| 266 | Running |  3.5567 | 2019-10-03 |
-| 265 | Running | 3.60182 | 2019-10-01 |
-| 264 | Running | 4.02893 | 2019-09-29 |
-| 263 | Running | 4.00548 | 2019-09-18 |
-| 262 | Running | 4.00844 | 2019-09-09 |
+| suuid    | sport   |      km | date(a.time) |
+|----------+---------+---------+--------------|
+| afcafd75 | Running | 5.03978 |   2019-10-12 |
+| 7056e089 | Running |  3.2164 |   2019-10-10 |
+| 1464e1ff | Running |  3.3995 |   2019-10-08 |
+| 80769f37 | Running | 3.58449 |   2019-10-06 |
+| 6ff87f35 | Running | 3.82884 |   2019-10-06 |
+| 0d9e2a43 | Running |  3.5567 |   2019-10-03 |
+| 0bce4776 | Running | 3.60182 |   2019-10-01 |
+| f21e579c | Running | 4.02893 |   2019-09-29 |
+| d126064e | Running | 4.00548 |   2019-09-18 |
+| 5ff68d4e | Running | 4.00844 |   2019-09-09 |
 
 * TRIMP
+  :PROPERTIES:
+  :header-args:sqliteold: :dir ../store/athletes :db UHJvZmVzc29yIFpvb20=.db :colnames yes
+  :header-args:sqlite: :dir /Users/robrohan/Desktop :db professor_zoom.db :colnames yes
+  :header-args:sql: :engine postgresql :dbhost 127.0.0.1 :dbuser postgres :dbpassword postgres :database postgres
+  :END:
 ** TRIMP^avg Average Heart Rate Scaling
 The simplest and most basic form of using Heart Rate to evaluate training load is to simply multiply the average Heart Rate for a workout by the time in minutes. 
 
@@ -39,25 +51,54 @@ So if an athlete runs for two hours with an average Heart Rate of 140 BPM, the T
 
 This method has the advantage of using the absolute measure of Heart Rate, and the simplicity of a trivial calculation. However, the flaw in this method is that the average Heart Rate does not really reflect the difficulty of a workout. Consider two workouts, each an hour-long. The first is a steady-state workout with a Heart Rate of 130 BPM. The second workout is an interval training session, where 50 min. is spent at around 120 BPM with 10 min. of intervals and 180 BPM which is also an average of 130 BPM. Both workouts have a TRIMPavg of 60 \*130 = 7,800. The equivalent TRIMPavg suggests that both workouts are equally difficult, but in practice the interval training is much harder.
 
+*** Postgres
 #+name: trimp_avg_hr
-#+begin_src sqlite :dir ../store/athletes :db UHJvZmVzc29yIFpvb20=.db :colnames yes
-select
-	(max(strftime('%s', time)) - min(strftime('%s', time))) / 60 as duration,
-	round(avg(t.hr), 0) as ahr,
-	(
-		(
-			max(strftime('%s', time)) - min(strftime('%s', time))
-		) / 60
-	) 
-	* round(avg(t.hr), 0) as trimp_avg_hr
-from TrackPoint t 
-where activity_id = 140
+#+begin_src sql 
+select 
+  agg.suuid,
+  (agg.max_time - agg.min_time) / 60 as duration,
+  agg.ahr,
+  (agg.max_time - agg.min_time) / 60 * agg.ahr as trimp_avg_hr
+from (
+  select 
+    extract(epoch from to_timestamp( max(t1.time) , 'YYYY-MM-DD hh24:mi:ssZ')) as max_time,
+    extract(epoch from to_timestamp( min(t1.time) , 'YYYY-MM-DD hh24:mi:ssZ')) as min_time,
+    round(avg(t1.hr)) as ahr,
+    t1.activity_uuid,
+    a.suuid as suuid
+  from "Professor Zoom".trackpoint t1
+  join "Professor Zoom".activity a on t1.activity_uuid = a.uuid
+  where a.suuid = 'e2b7ec31c2'
+  group by t1.activity_uuid, a.suuid) as agg
 #+end_src
 
 #+RESULTS: trimp_avg_hr
-| duration |   ahr | trimp_avg_hr |
-|----------+-------+--------------|
-|       36 | 149.0 |       5364.0 |
+| suuid      |           duration | ahr | trimp_avg_hr |
+|------------+--------------------+-----+--------------|
+| e2b7ec31c2 | 30.666666666666668 | 147 |         4508 |
+
+*** SQLite
+#+name: trimp_avg_hr_sqlite
+#+begin_src sqlite
+  select 
+    agg.suuid,
+    (agg.max_time - agg.min_time) / 60 as duration,
+    agg.ahr,
+    (agg.max_time - agg.min_time) / 60 * agg.ahr as trimp_avg_hr
+  from (
+    select 
+      max(strftime('%s', t1.time)) as max_time,
+      min(strftime('%s', t1.time)) as min_time,
+      round(avg(t1.hr), 0) as ahr,
+      t1.activity_uuid,
+      a.suuid as suuid
+    from trackpoint t1
+    join activity a on t1.activity_uuid = a.uuid
+    where a.suuid = '674e9c26'
+    group by t1.activity_uuid, a.suuid) as agg
+#+end_src
+
+#+RESULTS: trimp_avg_hr_sqlite
 
 ** TRIMP^zone Heart Rate Zone Scaling
 A slightly better approach than avg is based around Heart Rate zones. Instead of treating Heart Rate is a continuous range of values, it is divided up into different zones. These zones are based on the percentage of the Maximum Heart Rate (HR\max). One common approach is based around the book by Sally Edwards[1] that uses a five zones and assigns each a scaling factor as shown below.
@@ -71,6 +112,7 @@ A slightly better approach than avg is based around Heart Rate zones. Instead of
 |     .90 |     1.0 |     5 |
 
 This approach works well if you are using a Heart Rate Monitor that will display the times spent in each zone, but without transferring the details to a computer for more sophisticated analysis. However, there are some serious flaws in this technique. The most obvious is that a small change in heart rate could move from one zone to another, which could double the TRIMP^zone score. The scaling factors are also linear, but moving from 50-60% HR\max to 60-70% is far less than doubling the difficulty. By contrast, exercising at 100% rather than 90% is far harder than the 0.25 increase scaling factor would suggest. Finally, using %HR\max is inferior to using Heart Rate Reserve.
+
 ** TRIMP^exp Exponential Heart Rate Scaling
 A more sophisticated approach uses Heart Rate Reserve (see below) and an exponential scaling factor to account for the fact that higher intensity training as a disproportionately high training impact. The formula for calculating TRIMPexp is
 
@@ -105,13 +147,14 @@ Heart Rate Reserve is a how much your Heart Rate can speed up with exercise. It'
 
 Where HR\ex is the exercise Heart Rate. For example, for a HR\max of 180, a HR\rest of 40 and HR\ex of 140 would be (140 – 40)/(180 – 40), which is 71%.
 
+*** SQLite
 #+name: hr_scale
 | minHR | maxHR |
 |-------+-------|
-|    60 |   180 |
+|    50 |   180 |
 
 #+name: hhr
-#+begin_src sqlite :dir ../store/athletes :db UHJvZmVzc29yIFpvb20=.db :var minHR=hr_scale[0] :var maxHR=hr_scale[1] :colnames yes :var orgtable=hr_scale
+#+begin_src sqlite :var minHR=hr_scale[0] :var maxHR=hr_scale[1] :var orgtable=hr_scale
 drop table if exists hrVals;
 create table hrVals(minHR int, maxHR int);
 .mode csv hrVals
@@ -126,30 +169,27 @@ select
 	round(((t.hr - h.minHR) / (h.maxHR - h.minHR)) * 100, 0) as HHR,
 	-- how much VO2 you've used (see below)
 	round(((t.hr - h.minHR) / (h.maxHR - h.minHR)) * 100, 0) * 1.12 - 12 as VO2_max
-from TrackPoint t 
+from trackpoint t 
 join hrVals h
-where activity_id = 140
+where activity_uuid = '674e9c263f6570e6866d173cbb28943360f626c5'
 limit 10;
-
--- select * from hrVals;
-
 #+end_src
 
 #+RESULTS: hhr
-| speed |   hr | HHR_left |  HHR | VO2_max |
-|-------+------+----------+------+---------|
-| 1.101 | 79.0 |     84.0 | 16.0 |    5.92 |
-| 1.381 | 79.0 |     84.0 | 16.0 |    5.92 |
-| 2.538 | 90.0 |     75.0 | 25.0 |    16.0 |
-| 2.697 | 90.0 |     75.0 | 25.0 |    16.0 |
-|   0.0 | 91.0 |     74.0 | 26.0 |   17.12 |
-| 0.009 | 91.0 |     74.0 | 26.0 |   17.12 |
-|   0.0 | 95.0 |     71.0 | 29.0 |   20.48 |
-| 2.575 | 95.0 |     71.0 | 29.0 |   20.48 |
-| 2.575 | 98.0 |     68.0 | 32.0 |   23.84 |
-| 2.837 | 99.0 |     67.0 | 33.0 |   24.96 |
+| speed |   hr | HHR_left | HHR | VO2_max |
+|-------+------+----------+-----+---------|
+| 2.463 | 56.0 |     95.0 | 5.0 |    82.4 |
+| 2.641 | 56.0 |     95.0 | 5.0 |    82.4 |
+| 2.641 | 56.0 |     95.0 | 5.0 |    82.4 |
+|  2.65 | 56.0 |     95.0 | 5.0 |    82.4 |
+| 2.827 | 56.0 |     95.0 | 5.0 |    82.4 |
+| 2.827 | 56.0 |     95.0 | 5.0 |    82.4 |
+| 2.837 | 56.0 |     95.0 | 5.0 |    82.4 |
+| 2.865 | 56.0 |     95.0 | 5.0 |    82.4 |
+|  3.06 | 57.0 |     95.0 | 5.0 |    82.4 |
+|  3.06 | 57.0 |     95.0 | 5.0 |    82.4 |
 
-*** Esitmate VO2\max using HRR
+** Esitmate VO2\max using HRR
 Just as %HRR is the percentage of the difference between resting and max heart rate, so V̇O2max Reserve is the difference between resting V̇O2 and V̇O2max. If you need to convert %HRR to %V̇O2max, there's some correlation (r=0.78), and you can use this formula to get a rough estimate:
 
 %V̇O2max = %HRR x 1.12 – 12

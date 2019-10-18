@@ -1,0 +1,52 @@
+type Athlete {
+  id: ID!
+  name: String!
+  alterego: String!
+  activities: [Activity!]!
+}
+
+type Activity {
+  id: ID!
+  sid: String!
+  sport: String!
+  time: String!
+  athlete: Athlete!
+  laps: [Lap!]!
+  trackpoints: [TrackPoint!]!
+}
+
+type TrackPoint {
+  time: String!
+  lat: Float!
+  long: Float!
+  altitude: Float!
+  distance: Float!
+  hr: Float!
+  cadence: Float!
+  speed: Float!
+  power: Float!
+}
+
+type Lap {
+  time: String!
+  duration: Float!
+  distance: Float!
+  calories: Float!
+  max_speed: Float!
+  avg_hr: Float!
+  max_hr: Float!
+  intensity: String!
+}
+
+type Query {
+  athletes: [Athlete!]!
+}
+
+input NewAthlete {
+  name: String!
+  alterego: String!
+}
+
+type Mutation {
+  createAthlete(input: NewAthlete!): Athlete!
+}

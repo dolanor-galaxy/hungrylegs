@@ -12,6 +12,9 @@ list:
 test:
 	go test ./...
 
+run.server:
+	CGO_ENABLED=1 go run cmd/server/server/server.go
+
 # Run the local cli (will use config.json)
 run.cli:
 	CGO_ENABLED=1 go run cmd/cli/main.go
@@ -25,7 +28,7 @@ build.docker: clean
 	docker build -t therohans/hungrylegs .
 
 # Builds a local OS version
-build: clean
+build.cli: clean
 	mkdir build
 	CGO_ENABLED=1 go build -o hungrylegs cmd/cli/main.go 
 	mv ./hungrylegs build/
@@ -34,6 +37,15 @@ build: clean
 	cp -R ./import/ build/
 	cp -R ./migrations/ build/
 
+build.server: clean
+	mkdir build
+	CGO_ENABLED=1 go build -o hungrylegs cmd/server/server/server.go 
+	mv ./hungrylegs build/
+	cp ./config.prod.json build/config.json
+	mkdir -p build/store/athletes
+	cp -R ./import/ build/
+	cp -R ./migrations/ build/
+
 # Run the Dockerfile (only need when working on the dockerfile itself)
 run.docker:
-	docker run --rm -it -p 8000:8000 therohans/hungrylegs
+	docker run --rm -it -p 8080:8080 therohans/hungrylegs

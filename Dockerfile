@@ -2,7 +2,7 @@ FROM golang:alpine as builder
 RUN apk --no-cache add gcc g++ make ca-certificates
 WORKDIR /go/src/github.com/therohans/HungryLegs
 COPY . .
-RUN make build
+RUN make build.server
 
 FROM golang:alpine
 RUN apk --no-cache add ca-certificates
