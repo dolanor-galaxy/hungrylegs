@@ -1,6 +1,7 @@
 {
   "root": "Professor Zoom",
-  "import": "import",
+  "import": "/Users/robrohan/Dropbox/Documents/Fitness/CheetahAthlete/Professor Zoom/imports",
+  "_import": "import",
 
   "database": {
     "driver": "sqlite3",
