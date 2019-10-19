@@ -195,3 +195,24 @@ Just as %HRR is the percentage of the difference between resting and max heart r
 %V̇O2max = %HRR x 1.12 – 12
 
 So, if you're at 60% of HRR, that's (60 x 1.12) – 12 = 55% V̇O2max.
+* Functional Threshold
+** Cycling
+*** Functional Threshold Power (FTP):
+You can estimate FTP with from your best recent 20-minute power value (either from a dedicated 20-minute test or a sufficiently hard 20-minute effort from a race or workout). Multiply that value by 95% to get your FTP.
+You can also estimate FTP from a recent best 45-60 minute power output.
+More information on Functional Threshold Power can be found here.
+*** Heart Rate Threshold:
+Your threshold heart rate will be the average heart rate from a recent intense race or very hard interval from a training ride, where you spent 45-60 minutes in duration at an all-out effort.
+** Running
+*** Functional Threshold Pace:
+Your Functional Threshold Pace will be the average pace from a recent race or very hard training run of 45-60 minutes in duration. 
+More information on Functional Threshold Pace can be found here.
+*** Heart Rate Threshold:
+Your threshold heart rate will be the average heart rate from a recent race or very hard training run of 45-60 minutes in duration.
+** Swimming
+*** Functional Threshold Pace:
+Swim for 30 or 60 minutes as fast as you can, then record how far you went.  For example, if you swam 30 minutes and cover 1000 meters, then you can use the value of 33.3 m/min. as your FTP. Since the actual FTP is closer to the one-hour effort, it might be more advisable to perform a 60-minute test, or to take the value obtained for 30 minutes, multiply by two and subtract 2.5 percent (as most trained swimmers swim roughly 2.5 percent slower in a 60-minute maximal effort than in a 30-minute maximal effort). So again, if you cover 1000 m in 30 minutes, your 60-minute FTP would be 1900 m/hr or 31.7 m/min. This may seem like a minor difference, but due to the resistive aspect of swimming, small differences can have a substantial impact.
+
+More information on Swimming Functional Threshold Pace can be found [[https://www.trainingpeaks.com/blog/calculating-swimming-tss-score/][here]].
+
+For example, suppose you swim your 200m test swim in 2:02 (2.04 minutes) and your 400m test swim in 4:21 (4.35 minutes). Your critical velocity, then, is (400m – 200m) ÷ (4.35 min. – 2.02 min.) = 86.6 meters/min.

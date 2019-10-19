@@ -140,7 +140,7 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 
 		for _, lap := range activity.Laps {
 			hlLap := models.Lap{
-				Time:          lap.Timestamp,
+				Time:          lap.Timestamp.Format(time.RFC3339),
 				Start:         lap.StartTime.String(),
 				TotalTime:     lap.GetTotalElapsedTimeScaled(),
 				Dist:          lap.GetTotalDistanceScaled(),
@@ -160,7 +160,7 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 
 		for _, track := range activity.Records {
 			htTrack := models.Trackpoint{
-				Time:  track.Timestamp,
+				Time:  track.Timestamp.Format(time.RFC3339),
 				Lat:   track.PositionLat.Degrees(),
 				Long:  track.PositionLong.Degrees(),
 				Alt:   track.GetAltitudeScaled(),
@@ -215,9 +215,9 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 
 		for l := range act.Laps {
 			lap := act.Laps[l]
-			time, _ := time.Parse(time.RFC3339, lap.Start)
+			// time, _ := time.Parse(time.RFC3339, lap.Start)
 			hlLap := models.Lap{
-				Time:          time,
+				Time:          lap.Start,
 				Start:         lap.Start,
 				TotalTime:     lap.TotalTime,
 				Dist:          lap.Dist,
@@ -238,7 +238,7 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 				for t := range lap.Trk.Pt {
 					track := lap.Trk.Pt[t]
 					htTrack := models.Trackpoint{
-						Time:  track.Time,
+						Time:  track.Time.Format(time.RFC3339),
 						Lat:   track.Lat,
 						Long:  track.Long,
 						Alt:   track.Alt,

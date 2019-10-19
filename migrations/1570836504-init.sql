@@ -1,5 +1,50 @@
 -- +migrate Up
 -- SQL in section 'Up' is executed when this migration is applied
+CREATE TABLE IF NOT EXISTS athlete (
+  "name" TEXT,
+  age INTEGER,
+  "weight" INTEGER,
+  vo2_max INTEGER,
+  rest_hr INTEGER,
+
+  run_max_hr INTEGER,
+  run_ft_pace FLOAT,      -- functional threshold pace
+  run_zone5 INTEGER,  -- VO2 max
+  run_zone4 INTEGER,  -- Threshold
+  run_zone3 INTEGER,  -- Tempo
+  run_zone2 INTEGER,  -- Endurance
+  run_zone1 INTEGER,  -- Active Recovery
+
+  bike_max_hr INTEGER,
+  bike_ft_power FLOAT,     -- functional threshold power
+  --                                ft_hr *  x  / 100 
+  bike_zone5 INTEGER,  -- VO2 max          (121)
+  bike_zone4 INTEGER,  -- Threshold        (105)
+  bike_zone3 INTEGER,  -- Tempo            (94)
+  bike_zone2 INTEGER,  -- Endurance        (83)
+  bike_zone1 INTEGER,  -- Active Recovery  (68)
+
+  swim_max_hr INTEGER,
+  swim_ft_pace FLOAT,      -- functional threshold pace (meters/min)
+  swim_zone5 INTEGER,
+  swim_zone4 INTEGER,
+  swim_zone3 INTEGER,
+  swim_zone2 INTEGER,
+  swim_zone1 INTEGER,
+
+  ftp_watts FLOAT,  -- functional threshold watts
+  --                                        ftp_watts *  x  / 100
+  watts_zone7 INTEGER, -- Anaerobic capacity           (150)
+  watts_zone6 INTEGER, -- VO2 max                      (120)
+  watts_zone5 INTEGER, -- Lactate Threshold            (105)
+  watts_zone4 INTEGER, -- Tempo                        (93)
+  watts_zone3 INTEGER, -- Sweet Spot                   (90)
+  watts_zone2 INTEGER, -- Endurance                    (76)
+  watts_zone1 INTEGER  -- Active Recovery              (55)
+  -- power_to_weight FLOAT,  -- ftp_watts / weight * 100 / 100
+);
+
+
 CREATE TABLE IF NOT EXISTS activity (
   uuid TEXT,
   suuid TEXT,
@@ -59,5 +104,6 @@ DROP TABLE trackpoint;
 DROP TABLE lap;
 DROP TABLE activity;
 DROP TABLE fileimport;
+DROP TABLE athlete;
 
 -- DROP INDEX salary_index;
