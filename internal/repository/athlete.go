@@ -20,6 +20,8 @@ type AthleteRepository struct {
 	addLapQuery        *sql.Stmt
 	addTrackPointQuery *sql.Stmt
 	getActivities      *sql.Stmt
+	getLaps            *sql.Stmt
+	getTrackpoints     *sql.Stmt
 }
 
 func prepareQuery(query string, db *sql.DB) *sql.Stmt {
@@ -86,6 +88,24 @@ func Attach(schema *string, db *sql.DB, config *models.StaticConfig) *AthleteRep
 		LIMIT 100
 `, config), schema), db)
 
+	a.getLaps = prepareQuery(fmt.Sprintf(sqlForDriver(`
+		SELECT
+			"time", start, total_time, dist, calories,
+			max_speed, avg_hr, max_hr, intensity
+		FROM "%v".lap
+		WHERE activity_uuid = $1
+		ORDER BY "time" asc
+	`, config), schema), db)
+
+	a.getTrackpoints = prepareQuery(fmt.Sprintf(sqlForDriver(`
+		SELECT 
+			"time", lat, long, alt, dist, hr,
+			cad, speed, power
+		FROM "%v".trackpoint
+		WHERE activity_uuid = $1
+		ORDER BY "time" asc
+	`, config), schema), db)
+
 	return &a
 }
 
@@ -114,7 +134,7 @@ func (r *AthleteRepository) RecordImport(file string) error {
 
 func (r *AthleteRepository) AddActivity(act *models.Activity) error {
 	_, err := r.addActivityQuery.Exec(
-		act.FullUUID, act.UUID, act.Sport, act.Time, act.Creator.Name)
+		act.UUID, act.SUUID, act.Sport, act.Time, act.Creator.Name)
 	if err != nil {
 		return err
 	}
@@ -124,7 +144,7 @@ func (r *AthleteRepository) AddActivity(act *models.Activity) error {
 func (r *AthleteRepository) AddLap(act *models.Activity, lap *models.Lap) error {
 	_, err := r.addLapQuery.Exec(
 		lap.Time, lap.Start, lap.TotalTime, lap.Dist, lap.Calories, lap.MaxSpeed,
-		lap.AvgHr, lap.MaxHr, lap.Intensity, lap.TriggerMethod, act.FullUUID,
+		lap.AvgHr, lap.MaxHr, lap.Intensity, lap.TriggerMethod, act.UUID,
 	)
 	if err != nil {
 		return err
@@ -135,7 +155,7 @@ func (r *AthleteRepository) AddLap(act *models.Activity, lap *models.Lap) error 
 func (r *AthleteRepository) AddTrackPoint(act *models.Activity, tp *models.Trackpoint) error {
 	_, err := r.addTrackPointQuery.Exec(
 		tp.Time, tp.Lat, tp.Long, tp.Alt, tp.Dist,
-		tp.HR, tp.Cad, tp.Speed, tp.Power, act.FullUUID,
+		tp.HR, tp.Cad, tp.Speed, tp.Power, act.UUID,
 	)
 	if err != nil {
 		return err
@@ -155,7 +175,7 @@ func (r *AthleteRepository) GetActivities(start string, end string) ([]*models.A
 			a := models.Activity{}
 			rows.Scan(
 				&a.UUID,
-				&a.FullUUID,
+				&a.SUUID,
 				&a.Sport,
 				&a.Time,
 				&a.Creator)
@@ -163,4 +183,56 @@ func (r *AthleteRepository) GetActivities(start string, end string) ([]*models.A
 		}
 	}
 	return acts, nil
+}
+
+func (r *AthleteRepository) GetLaps(activity_uuid string) ([]*models.Lap, error) {
+	rows, err := r.getLaps.Query(activity_uuid)
+	if err != nil {
+		return nil, err
+	}
+	var laps []*models.Lap
+
+	if rows != nil {
+		for rows.Next() {
+			l := models.Lap{}
+			rows.Scan(
+				&l.Time,
+				&l.Start,
+				&l.TotalTime,
+				&l.Dist,
+				&l.Calories,
+				&l.MaxSpeed,
+				&l.AvgHr,
+				&l.MaxHr,
+				&l.Intensity)
+			laps = append(laps, &l)
+		}
+	}
+	return laps, nil
+}
+
+func (r *AthleteRepository) GetTrackpoints(activity_uuid string) ([]*models.Trackpoint, error) {
+	rows, err := r.getTrackpoints.Query(activity_uuid)
+	if err != nil {
+		return nil, err
+	}
+	var tp []*models.Trackpoint
+
+	if rows != nil {
+		for rows.Next() {
+			l := models.Trackpoint{}
+			rows.Scan(
+				&l.Time,
+				&l.Lat,
+				&l.Long,
+				&l.Alt,
+				&l.Dist,
+				&l.HR,
+				&l.Cad,
+				&l.Speed,
+				&l.Power)
+			tp = append(tp, &l)
+		}
+	}
+	return tp, nil
 }

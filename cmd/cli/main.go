@@ -20,7 +20,7 @@ func main() {
 	}
 
 	log.Printf("Creating root athlete...")
-	rootAthlete := models.NewAthlete(config.RootAthlete)
+	rootAthlete := models.NewAthlete(&config.RootAthlete, &config.RootAthlete)
 	db, err := repository.OpenDatabase(config, rootAthlete)
 	if err != nil {
 		log.Fatal(err)
@@ -28,7 +28,7 @@ func main() {
 	defer db.Close()
 
 	// Put the API on top of the connection
-	repo := repository.Attach(rootAthlete, db, config)
+	repo := repository.Attach(rootAthlete.Alterego, db, config)
 
 	log.Printf("Starting import...")
 	start := time.Now()

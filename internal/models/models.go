@@ -1,12 +1,8 @@
 package models
 
-import (
-	"time"
-)
-
 // Trackpoint is a single capture event
 type Trackpoint struct {
-	Time  time.Time
+	Time  string
 	Lat   float64
 	Long  float64
 	Alt   float64
@@ -24,7 +20,7 @@ type Track struct {
 
 // Lap is a single cycle, say 1km or when you click the lap button
 type Lap struct {
-	Time          time.Time
+	Time          string
 	Start         string
 	TotalTime     float64
 	Dist          float64
@@ -39,12 +35,12 @@ type Lap struct {
 
 // Activity is a single session of a particular activity Bike, Run, Swim, etc
 type Activity struct {
-	UUID     string
-	FullUUID string
-	Sport    string
-	Time     string
-	Laps     []Lap
-	Creator  Device
+	UUID    string
+	SUUID   string
+	Sport   string
+	Time    string
+	Laps    []Lap
+	Creator Device
 }
 
 // Activities is the list of activities for this session

@@ -53,7 +53,7 @@ type ComplexityRoot struct {
 	}
 
 	Athlete struct {
-		Activities func(childComplexity int) int
+		Activities func(childComplexity int, startTime *string, endTime *string) int
 		Alterego   func(childComplexity int) int
 		ID         func(childComplexity int) int
 		Name       func(childComplexity int) int
@@ -77,8 +77,8 @@ type ComplexityRoot struct {
 	Query struct {
 		Activities  func(childComplexity int, athleteID string, startTime *string, endTime *string) int
 		Athlete     func(childComplexity int, alterego string) int
-		Laps        func(childComplexity int, athleteID string, activityID *string, startTime *string, endTime *string) int
-		Trackpoints func(childComplexity int, athleteID string, activityID string, startTime *string, endTime *string) int
+		Laps        func(childComplexity int, athleteID string, activityID string) int
+		Trackpoints func(childComplexity int, athleteID string, activityID string) int
 	}
 
 	TrackPoint struct {
@@ -100,8 +100,8 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Athlete(ctx context.Context, alterego string) (*Athlete, error)
 	Activities(ctx context.Context, athleteID string, startTime *string, endTime *string) ([]*Activity, error)
-	Laps(ctx context.Context, athleteID string, activityID *string, startTime *string, endTime *string) ([]*Lap, error)
-	Trackpoints(ctx context.Context, athleteID string, activityID string, startTime *string, endTime *string) ([]*TrackPoint, error)
+	Laps(ctx context.Context, athleteID string, activityID string) ([]*Lap, error)
+	Trackpoints(ctx context.Context, athleteID string, activityID string) ([]*TrackPoint, error)
 }
 
 type executableSchema struct {
@@ -173,7 +173,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Athlete.Activities(childComplexity), true
+		args, err := ec.field_Athlete_activities_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Athlete.Activities(childComplexity, args["start_time"].(*string), args["end_time"].(*string)), true
 
 	case "Athlete.alterego":
 		if e.complexity.Athlete.Alterego == nil {
@@ -298,7 +303,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Laps(childComplexity, args["athlete_id"].(string), args["activity_id"].(*string), args["start_time"].(*string), args["end_time"].(*string)), true
+		return e.complexity.Query.Laps(childComplexity, args["athlete_id"].(string), args["activity_id"].(string)), true
 
 	case "Query.trackpoints":
 		if e.complexity.Query.Trackpoints == nil {
@@ -310,7 +315,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Trackpoints(childComplexity, args["athlete_id"].(string), args["activity_id"].(string), args["start_time"].(*string), args["end_time"].(*string)), true
+		return e.complexity.Query.Trackpoints(childComplexity, args["athlete_id"].(string), args["activity_id"].(string)), true
 
 	case "TrackPoint.altitude":
 		if e.complexity.TrackPoint.Altitude == nil {
@@ -441,7 +446,7 @@ var parsedSchema = gqlparser.MustLoadSchema(
   id: ID!
   name: String!
   alterego: String!
-  activities: [Activity!]!
+  activities(start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [Activity!]!
 }
 
 type Activity {
@@ -481,8 +486,8 @@ type Query {
   athlete(alterego: String!): Athlete!
   activities(athlete_id: String!, start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [Activity!]!
 
-  laps(athlete_id: String!, activity_id: String, start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [Lap!]!
-  trackpoints(athlete_id: String!, activity_id: String!, start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [TrackPoint!]!
+  laps(athlete_id: String!, activity_id: String!): [Lap!]!
+  trackpoints(athlete_id: String!, activity_id: String!): [TrackPoint!]!
 }
 
 input NewAthlete {
@@ -499,6 +504,28 @@ type Mutation {
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Athlete_activities_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["start_time"]; ok {
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["start_time"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["end_time"]; ok {
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["end_time"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createAthlete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -583,30 +610,14 @@ func (ec *executionContext) field_Query_laps_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["athlete_id"] = arg0
-	var arg1 *string
+	var arg1 string
 	if tmp, ok := rawArgs["activity_id"]; ok {
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["activity_id"] = arg1
-	var arg2 *string
-	if tmp, ok := rawArgs["start_time"]; ok {
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["start_time"] = arg2
-	var arg3 *string
-	if tmp, ok := rawArgs["end_time"]; ok {
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["end_time"] = arg3
 	return args, nil
 }
 
@@ -629,22 +640,6 @@ func (ec *executionContext) field_Query_trackpoints_args(ctx context.Context, ra
 		}
 	}
 	args["activity_id"] = arg1
-	var arg2 *string
-	if tmp, ok := rawArgs["start_time"]; ok {
-		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["start_time"] = arg2
-	var arg3 *string
-	if tmp, ok := rawArgs["end_time"]; ok {
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["end_time"] = arg3
 	return args, nil
 }
 
@@ -1070,6 +1065,13 @@ func (ec *executionContext) _Athlete_activities(ctx context.Context, field graph
 		IsMethod: false,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Athlete_activities_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
@@ -1545,7 +1547,7 @@ func (ec *executionContext) _Query_laps(ctx context.Context, field graphql.Colle
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Laps(rctx, args["athlete_id"].(string), args["activity_id"].(*string), args["start_time"].(*string), args["end_time"].(*string))
+		return ec.resolvers.Query().Laps(rctx, args["athlete_id"].(string), args["activity_id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1589,7 +1591,7 @@ func (ec *executionContext) _Query_trackpoints(ctx context.Context, field graphq
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Trackpoints(rctx, args["athlete_id"].(string), args["activity_id"].(string), args["start_time"].(*string), args["end_time"].(*string))
+		return ec.resolvers.Query().Trackpoints(rctx, args["athlete_id"].(string), args["activity_id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

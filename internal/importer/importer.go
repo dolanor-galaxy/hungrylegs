@@ -126,10 +126,10 @@ func (f *FitFile) Import(file string, repo *repository.AthleteRepository) error 
 			sport := session.Sport.String()
 			hash := ActivityHash(sport, session.Timestamp, file)
 			hlAct = models.Activity{
-				ID:       session.Timestamp,
-				UUID:     hash[:10],
-				FullUUID: hash,
-				Sport:    sport,
+				Time:  session.Timestamp.Format(time.RFC3339),
+				UUID:  hash,
+				SUUID: hash[:10],
+				Sport: sport,
 			}
 			err = repo.AddActivity(&hlAct)
 			if err != nil {
@@ -202,10 +202,10 @@ func (f *TcxFile) Import(file string, repo *repository.AthleteRepository) error 
 		act := tcxdb.Acts.Act[i]
 		hash := ActivityHash(act.Sport, act.Id, file)
 		hlAct := models.Activity{
-			ID:       act.Id,
-			UUID:     hash[:8],
-			FullUUID: hash,
-			Sport:    act.Sport,
+			Time:  act.Id.Format(time.RFC3339),
+			UUID:  hash,
+			SUUID: hash[:10],
+			Sport: act.Sport,
 		}
 		err = repo.AddActivity(&hlAct)
 		if err != nil {
