@@ -2,7 +2,7 @@ type Athlete {
   id: ID!
   name: String!
   alterego: String!
-  activities: [Activity!]!
+  activities(start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [Activity!]!
 }
 
 type Activity {
@@ -39,7 +39,11 @@ type Lap {
 }
 
 type Query {
-  athletes: [Athlete!]!
+  athlete(alterego: String!): Athlete!
+  activities(athlete_id: String!, start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [Activity!]!
+
+  laps(athlete_id: String!, activity_id: String, start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [Lap!]!
+  trackpoints(athlete_id: String!, activity_id: String!, start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [TrackPoint!]!
 }
 
 input NewAthlete {

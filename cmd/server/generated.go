@@ -75,7 +75,10 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Athletes func(childComplexity int) int
+		Activities  func(childComplexity int, athleteID string, startTime *string, endTime *string) int
+		Athlete     func(childComplexity int, alterego string) int
+		Laps        func(childComplexity int, athleteID string, activityID *string, startTime *string, endTime *string) int
+		Trackpoints func(childComplexity int, athleteID string, activityID string, startTime *string, endTime *string) int
 	}
 
 	TrackPoint struct {
@@ -95,7 +98,10 @@ type MutationResolver interface {
 	CreateAthlete(ctx context.Context, input NewAthlete) (*Athlete, error)
 }
 type QueryResolver interface {
-	Athletes(ctx context.Context) ([]*Athlete, error)
+	Athlete(ctx context.Context, alterego string) (*Athlete, error)
+	Activities(ctx context.Context, athleteID string, startTime *string, endTime *string) ([]*Activity, error)
+	Laps(ctx context.Context, athleteID string, activityID *string, startTime *string, endTime *string) ([]*Lap, error)
+	Trackpoints(ctx context.Context, athleteID string, activityID string, startTime *string, endTime *string) ([]*TrackPoint, error)
 }
 
 type executableSchema struct {
@@ -258,12 +264,53 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateAthlete(childComplexity, args["input"].(NewAthlete)), true
 
-	case "Query.athletes":
-		if e.complexity.Query.Athletes == nil {
+	case "Query.activities":
+		if e.complexity.Query.Activities == nil {
 			break
 		}
 
-		return e.complexity.Query.Athletes(childComplexity), true
+		args, err := ec.field_Query_activities_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Activities(childComplexity, args["athlete_id"].(string), args["start_time"].(*string), args["end_time"].(*string)), true
+
+	case "Query.athlete":
+		if e.complexity.Query.Athlete == nil {
+			break
+		}
+
+		args, err := ec.field_Query_athlete_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Athlete(childComplexity, args["alterego"].(string)), true
+
+	case "Query.laps":
+		if e.complexity.Query.Laps == nil {
+			break
+		}
+
+		args, err := ec.field_Query_laps_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Laps(childComplexity, args["athlete_id"].(string), args["activity_id"].(*string), args["start_time"].(*string), args["end_time"].(*string)), true
+
+	case "Query.trackpoints":
+		if e.complexity.Query.Trackpoints == nil {
+			break
+		}
+
+		args, err := ec.field_Query_trackpoints_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Trackpoints(childComplexity, args["athlete_id"].(string), args["activity_id"].(string), args["start_time"].(*string), args["end_time"].(*string)), true
 
 	case "TrackPoint.altitude":
 		if e.complexity.TrackPoint.Altitude == nil {
@@ -431,7 +478,11 @@ type Lap {
 }
 
 type Query {
-  athletes: [Athlete!]!
+  athlete(alterego: String!): Athlete!
+  activities(athlete_id: String!, start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [Activity!]!
+
+  laps(athlete_id: String!, activity_id: String, start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [Lap!]!
+  trackpoints(athlete_id: String!, activity_id: String!, start_time: String = "1900-01-01", end_time: String = "3000-01-01"): [TrackPoint!]!
 }
 
 input NewAthlete {
@@ -474,6 +525,126 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_activities_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["athlete_id"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["athlete_id"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["start_time"]; ok {
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["start_time"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["end_time"]; ok {
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["end_time"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_athlete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["alterego"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["alterego"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_laps_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["athlete_id"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["athlete_id"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["activity_id"]; ok {
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["activity_id"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["start_time"]; ok {
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["start_time"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["end_time"]; ok {
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["end_time"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_trackpoints_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["athlete_id"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["athlete_id"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["activity_id"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["activity_id"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["start_time"]; ok {
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["start_time"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["end_time"]; ok {
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["end_time"] = arg3
 	return args, nil
 }
 
@@ -1260,7 +1431,7 @@ func (ec *executionContext) _Mutation_createAthlete(ctx context.Context, field g
 	return ec.marshalNAthlete2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_athletes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_athlete(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -1276,10 +1447,17 @@ func (ec *executionContext) _Query_athletes(ctx context.Context, field graphql.C
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_athlete_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Athletes(rctx)
+		return ec.resolvers.Query().Athlete(rctx, args["alterego"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1291,10 +1469,142 @@ func (ec *executionContext) _Query_athletes(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*Athlete)
+	res := resTmp.(*Athlete)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNAthlete2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx, field.Selections, res)
+	return ec.marshalNAthlete2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_activities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_activities_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Activities(rctx, args["athlete_id"].(string), args["start_time"].(*string), args["end_time"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Activity)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNActivity2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_laps(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_laps_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Laps(rctx, args["athlete_id"].(string), args["activity_id"].(*string), args["start_time"].(*string), args["end_time"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Lap)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNLap2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐLap(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_trackpoints(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_trackpoints_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Trackpoints(rctx, args["athlete_id"].(string), args["activity_id"].(string), args["start_time"].(*string), args["end_time"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*TrackPoint)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNTrackPoint2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3095,7 +3405,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "athletes":
+		case "athlete":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -3103,7 +3413,49 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_athletes(ctx, field)
+				res = ec._Query_athlete(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "activities":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_activities(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "laps":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_laps(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "trackpoints":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_trackpoints(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3489,43 +3841,6 @@ func (ec *executionContext) marshalNActivity2ᚖgithubᚗcomᚋtherohansᚋHungr
 
 func (ec *executionContext) marshalNAthlete2githubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx context.Context, sel ast.SelectionSet, v Athlete) graphql.Marshaler {
 	return ec._Athlete(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAthlete2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx context.Context, sel ast.SelectionSet, v []*Athlete) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		rctx := &graphql.ResolverContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithResolverContext(ctx, rctx)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAthlete2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
 }
 
 func (ec *executionContext) marshalNAthlete2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx context.Context, sel ast.SelectionSet, v *Athlete) graphql.Marshaler {

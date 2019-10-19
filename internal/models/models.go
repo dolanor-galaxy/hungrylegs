@@ -42,7 +42,7 @@ type Activity struct {
 	UUID     string
 	FullUUID string
 	Sport    string
-	ID       time.Time
+	Time     string
 	Laps     []Lap
 	Creator  Device
 }

@@ -6,14 +6,17 @@ import (
 
 // Athlete is the root level account
 type Athlete struct {
-	Name         string
-	FileSafeName string
+	Alterego     *string
+	Name         *string
+	FileSafeName *string
 }
 
-func NewAthlete(name string) *Athlete {
+func NewAthlete(name *string, alterego *string) *Athlete {
+	safe := base64.URLEncoding.EncodeToString([]byte(*alterego))
 	a := Athlete{
+		Alterego:     alterego,
 		Name:         name,
-		FileSafeName: base64.URLEncoding.EncodeToString([]byte(name)),
+		FileSafeName: &safe,
 	}
 	return &a
 }

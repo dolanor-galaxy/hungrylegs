@@ -6,9 +6,10 @@ require (
 	github.com/99designs/gqlgen v0.10.1
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/creack/pty v1.1.9 // indirect
+	github.com/go-chi/chi v3.3.2+incompatible
 	github.com/gobuffalo/packr v1.30.1 // indirect
 	github.com/gordonklaus/ineffassign v0.0.0-20190601041439-ed7b1b5ee0f8 // indirect
-	github.com/gorilla/mux v1.7.3 // indirect
+	github.com/gorilla/mux v1.7.3
 	github.com/kortschak/utter v0.0.0-20190412033250-50fe362e6560 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lib/pq v1.2.0

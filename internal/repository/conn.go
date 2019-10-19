@@ -13,7 +13,7 @@ import (
 
 // OpenDatabase Open up the database connection
 func OpenDatabase(config *models.StaticConfig, a *models.Athlete) (*sql.DB, error) {
-	conn := strings.ReplaceAll(config.Database.Connection, "{athlete}", a.FileSafeName)
+	conn := strings.ReplaceAll(config.Database.Connection, "{athlete}", *a.FileSafeName)
 	db, err := sql.Open(config.Database.Driver, conn)
 	if err != nil {
 		log.Printf("Failed to open athlete store")
@@ -21,7 +21,7 @@ func OpenDatabase(config *models.StaticConfig, a *models.Athlete) (*sql.DB, erro
 	}
 
 	for _, ex := range config.Database.Post {
-		cmd := strings.ReplaceAll(ex, "{athlete}", a.Name)
+		cmd := strings.ReplaceAll(ex, "{athlete}", *a.Name)
 		_, err = db.Exec(cmd)
 		if err != nil {
 			log.Printf("%v\n", err.Error())
