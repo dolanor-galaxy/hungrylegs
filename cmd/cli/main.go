@@ -6,9 +6,9 @@ import (
 
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/therohans/HungryLegs/internal/importer"
-	"github.com/therohans/HungryLegs/internal/models"
-	"github.com/therohans/HungryLegs/internal/repository"
+	"github.com/robrohan/HungryLegs/internal/importer"
+	"github.com/robrohan/HungryLegs/internal/models"
+	"github.com/robrohan/HungryLegs/internal/repository"
 )
 
 func main() {

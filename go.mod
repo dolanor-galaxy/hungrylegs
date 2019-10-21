@@ -1,4 +1,4 @@
-module github.com/therohans/HungryLegs
+module github.com/robrohan/HungryLegs
 
 go 1.12
 

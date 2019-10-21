@@ -7,12 +7,12 @@ import (
 
 	"github.com/99designs/gqlgen/handler"
 	"github.com/gorilla/mux"
-	"github.com/therohans/HungryLegs/cmd/server"
+	"github.com/robrohan/HungryLegs/cmd/server"
 
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/therohans/HungryLegs/internal/models"
-	"github.com/therohans/HungryLegs/internal/repository"
+	"github.com/robrohan/HungryLegs/internal/models"
+	"github.com/robrohan/HungryLegs/internal/repository"
 )
 
 const defaultPort = "8080"

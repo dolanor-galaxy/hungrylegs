@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/therohans/HungryLegs/internal/models"
-	"github.com/therohans/HungryLegs/internal/repository"
-	"github.com/therohans/HungryLegs/internal/tcx"
+	"github.com/robrohan/HungryLegs/internal/models"
+	"github.com/robrohan/HungryLegs/internal/repository"
+	"github.com/robrohan/HungryLegs/internal/tcx"
 	"github.com/tormoder/fit"
 )
 

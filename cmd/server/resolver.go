@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 
-	"github.com/therohans/HungryLegs/internal/models"
-	"github.com/therohans/HungryLegs/internal/repository"
+	"github.com/robrohan/HungryLegs/internal/models"
+	"github.com/robrohan/HungryLegs/internal/repository"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 type Resolver struct{}

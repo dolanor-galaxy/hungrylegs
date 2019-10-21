@@ -38,7 +38,7 @@ clean:
 
 # Builds a version within Docker (Linux)
 build.docker: clean
-	docker build -t therohans/hungrylegs .
+	docker build -t robrohan/hungrylegs .
 
 # Builds a local OS version
 build.cli: clean
@@ -62,7 +62,7 @@ build.server: clean
 
 # Run the Dockerfile (only need when working on the dockerfile itself)
 run.docker:
-	docker run --rm -it -p 8080:8080 therohans/hungrylegs
+	docker run --rm -it -p 8080:8080 robrohan/hungrylegs
 
 # Build all the tools for local playing aroundc
 build.all.cli: clean build.cli build.plan

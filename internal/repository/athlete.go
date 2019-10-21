@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/therohans/HungryLegs/internal/models"
+	"github.com/robrohan/HungryLegs/internal/models"
 )
 
 type AthleteRepository struct {

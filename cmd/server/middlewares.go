@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/therohans/HungryLegs/internal/models"
+	"github.com/robrohan/HungryLegs/internal/models"
 )
 
 // A private key for context that only this package can access. This is important

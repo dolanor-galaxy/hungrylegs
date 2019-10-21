@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	migrate "github.com/rubenv/sql-migrate"
-	"github.com/therohans/HungryLegs/internal/models"
+	"github.com/robrohan/HungryLegs/internal/models"
 )
 
 // OpenDatabase Open up the database connection
