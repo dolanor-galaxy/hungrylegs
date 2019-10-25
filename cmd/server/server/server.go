@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/99designs/gqlgen/handler"
 	"github.com/gorilla/mux"
@@ -11,6 +12,7 @@ import (
 
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/robrohan/HungryLegs/internal/importer"
 	"github.com/robrohan/HungryLegs/internal/models"
 	"github.com/robrohan/HungryLegs/internal/repository"
 )
@@ -38,15 +40,15 @@ func main() {
 	defer db.Close()
 
 	// Put the API on top of the connection
-	// repo := repository.Attach(rootAthlete, db, config)
+	repo := repository.Attach(*rootAthlete.Alterego, db, config)
 
-	// log.Printf("Starting import...")
-	// start := time.Now()
-	// // Launch the activity importer
-	// importer.ImportActivites(config.ImportDir, repo)
-	// t := time.Now()
-	// elapsed := t.Sub(start)
-	// log.Printf("Full import took %v", elapsed)
+	log.Printf("Starting import...")
+	start := time.Now()
+	// Launch the activity importer
+	importer.ImportActivites(config.ImportDir, repo)
+	t := time.Now()
+	elapsed := t.Sub(start)
+	log.Printf("Full import took %v", elapsed)
 	////////////////////////////////////////////
 
 	router := mux.NewRouter()

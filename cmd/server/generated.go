@@ -34,6 +34,8 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Activity() ActivityResolver
+	Athlete() AthleteResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 }
@@ -94,6 +96,13 @@ type ComplexityRoot struct {
 	}
 }
 
+type ActivityResolver interface {
+	Laps(ctx context.Context, obj *Activity) ([]*Lap, error)
+	Trackpoints(ctx context.Context, obj *Activity) ([]*TrackPoint, error)
+}
+type AthleteResolver interface {
+	Activities(ctx context.Context, obj *Athlete, startTime *string, endTime *string) ([]*Activity, error)
+}
 type MutationResolver interface {
 	CreateAthlete(ctx context.Context, input NewAthlete) (*Athlete, error)
 }
@@ -532,7 +541,7 @@ func (ec *executionContext) field_Mutation_createAthlete_args(ctx context.Contex
 	args := map[string]interface{}{}
 	var arg0 NewAthlete
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalNNewAthlete2githubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐNewAthlete(ctx, tmp)
+		arg0, err = ec.unmarshalNNewAthlete2githubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐNewAthlete(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -861,7 +870,7 @@ func (ec *executionContext) _Activity_athlete(ctx context.Context, field graphql
 	res := resTmp.(*Athlete)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNAthlete2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx, field.Selections, res)
+	return ec.marshalNAthlete2ᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Activity_laps(ctx context.Context, field graphql.CollectedField, obj *Activity) (ret graphql.Marshaler) {
@@ -877,13 +886,13 @@ func (ec *executionContext) _Activity_laps(ctx context.Context, field graphql.Co
 		Object:   "Activity",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Laps, nil
+		return ec.resolvers.Activity().Laps(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -898,7 +907,7 @@ func (ec *executionContext) _Activity_laps(ctx context.Context, field graphql.Co
 	res := resTmp.([]*Lap)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNLap2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐLap(ctx, field.Selections, res)
+	return ec.marshalNLap2ᚕᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐLap(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Activity_trackpoints(ctx context.Context, field graphql.CollectedField, obj *Activity) (ret graphql.Marshaler) {
@@ -914,13 +923,13 @@ func (ec *executionContext) _Activity_trackpoints(ctx context.Context, field gra
 		Object:   "Activity",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Trackpoints, nil
+		return ec.resolvers.Activity().Trackpoints(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -935,7 +944,7 @@ func (ec *executionContext) _Activity_trackpoints(ctx context.Context, field gra
 	res := resTmp.([]*TrackPoint)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNTrackPoint2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx, field.Selections, res)
+	return ec.marshalNTrackPoint2ᚕᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Athlete_id(ctx context.Context, field graphql.CollectedField, obj *Athlete) (ret graphql.Marshaler) {
@@ -1062,7 +1071,7 @@ func (ec *executionContext) _Athlete_activities(ctx context.Context, field graph
 		Object:   "Athlete",
 		Field:    field,
 		Args:     nil,
-		IsMethod: false,
+		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	rawArgs := field.ArgumentMap(ec.Variables)
@@ -1075,7 +1084,7 @@ func (ec *executionContext) _Athlete_activities(ctx context.Context, field graph
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Activities, nil
+		return ec.resolvers.Athlete().Activities(rctx, obj, args["start_time"].(*string), args["end_time"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1090,7 +1099,7 @@ func (ec *executionContext) _Athlete_activities(ctx context.Context, field graph
 	res := resTmp.([]*Activity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNActivity2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx, field.Selections, res)
+	return ec.marshalNActivity2ᚕᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Lap_time(ctx context.Context, field graphql.CollectedField, obj *Lap) (ret graphql.Marshaler) {
@@ -1430,7 +1439,7 @@ func (ec *executionContext) _Mutation_createAthlete(ctx context.Context, field g
 	res := resTmp.(*Athlete)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNAthlete2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx, field.Selections, res)
+	return ec.marshalNAthlete2ᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_athlete(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1474,7 +1483,7 @@ func (ec *executionContext) _Query_athlete(ctx context.Context, field graphql.Co
 	res := resTmp.(*Athlete)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNAthlete2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx, field.Selections, res)
+	return ec.marshalNAthlete2ᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_activities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1518,7 +1527,7 @@ func (ec *executionContext) _Query_activities(ctx context.Context, field graphql
 	res := resTmp.([]*Activity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNActivity2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx, field.Selections, res)
+	return ec.marshalNActivity2ᚕᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_laps(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1562,7 +1571,7 @@ func (ec *executionContext) _Query_laps(ctx context.Context, field graphql.Colle
 	res := resTmp.([]*Lap)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNLap2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐLap(ctx, field.Selections, res)
+	return ec.marshalNLap2ᚕᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐLap(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_trackpoints(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1606,7 +1615,7 @@ func (ec *executionContext) _Query_trackpoints(ctx context.Context, field graphq
 	res := resTmp.([]*TrackPoint)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNTrackPoint2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx, field.Selections, res)
+	return ec.marshalNTrackPoint2ᚕᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3214,38 +3223,56 @@ func (ec *executionContext) _Activity(ctx context.Context, sel ast.SelectionSet,
 		case "id":
 			out.Values[i] = ec._Activity_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "sid":
 			out.Values[i] = ec._Activity_sid(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "sport":
 			out.Values[i] = ec._Activity_sport(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "time":
 			out.Values[i] = ec._Activity_time(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "athlete":
 			out.Values[i] = ec._Activity_athlete(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "laps":
-			out.Values[i] = ec._Activity_laps(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Activity_laps(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "trackpoints":
-			out.Values[i] = ec._Activity_trackpoints(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Activity_trackpoints(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3271,23 +3298,32 @@ func (ec *executionContext) _Athlete(ctx context.Context, sel ast.SelectionSet, 
 		case "id":
 			out.Values[i] = ec._Athlete_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._Athlete_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "alterego":
 			out.Values[i] = ec._Athlete_alterego(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "activities":
-			out.Values[i] = ec._Athlete_activities(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Athlete_activities(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3790,11 +3826,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNActivity2githubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx context.Context, sel ast.SelectionSet, v Activity) graphql.Marshaler {
+func (ec *executionContext) marshalNActivity2githubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx context.Context, sel ast.SelectionSet, v Activity) graphql.Marshaler {
 	return ec._Activity(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNActivity2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx context.Context, sel ast.SelectionSet, v []*Activity) graphql.Marshaler {
+func (ec *executionContext) marshalNActivity2ᚕᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx context.Context, sel ast.SelectionSet, v []*Activity) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3818,7 +3854,7 @@ func (ec *executionContext) marshalNActivity2ᚕᚖgithubᚗcomᚋtherohansᚋHu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNActivity2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx, sel, v[i])
+			ret[i] = ec.marshalNActivity2ᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3831,7 +3867,7 @@ func (ec *executionContext) marshalNActivity2ᚕᚖgithubᚗcomᚋtherohansᚋHu
 	return ret
 }
 
-func (ec *executionContext) marshalNActivity2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx context.Context, sel ast.SelectionSet, v *Activity) graphql.Marshaler {
+func (ec *executionContext) marshalNActivity2ᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐActivity(ctx context.Context, sel ast.SelectionSet, v *Activity) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -3841,11 +3877,11 @@ func (ec *executionContext) marshalNActivity2ᚖgithubᚗcomᚋtherohansᚋHungr
 	return ec._Activity(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNAthlete2githubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx context.Context, sel ast.SelectionSet, v Athlete) graphql.Marshaler {
+func (ec *executionContext) marshalNAthlete2githubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx context.Context, sel ast.SelectionSet, v Athlete) graphql.Marshaler {
 	return ec._Athlete(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAthlete2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx context.Context, sel ast.SelectionSet, v *Athlete) graphql.Marshaler {
+func (ec *executionContext) marshalNAthlete2ᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐAthlete(ctx context.Context, sel ast.SelectionSet, v *Athlete) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -3897,11 +3933,11 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNLap2githubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐLap(ctx context.Context, sel ast.SelectionSet, v Lap) graphql.Marshaler {
+func (ec *executionContext) marshalNLap2githubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐLap(ctx context.Context, sel ast.SelectionSet, v Lap) graphql.Marshaler {
 	return ec._Lap(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNLap2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐLap(ctx context.Context, sel ast.SelectionSet, v []*Lap) graphql.Marshaler {
+func (ec *executionContext) marshalNLap2ᚕᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐLap(ctx context.Context, sel ast.SelectionSet, v []*Lap) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3925,7 +3961,7 @@ func (ec *executionContext) marshalNLap2ᚕᚖgithubᚗcomᚋtherohansᚋHungryL
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNLap2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐLap(ctx, sel, v[i])
+			ret[i] = ec.marshalNLap2ᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐLap(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3938,7 +3974,7 @@ func (ec *executionContext) marshalNLap2ᚕᚖgithubᚗcomᚋtherohansᚋHungryL
 	return ret
 }
 
-func (ec *executionContext) marshalNLap2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐLap(ctx context.Context, sel ast.SelectionSet, v *Lap) graphql.Marshaler {
+func (ec *executionContext) marshalNLap2ᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐLap(ctx context.Context, sel ast.SelectionSet, v *Lap) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -3948,7 +3984,7 @@ func (ec *executionContext) marshalNLap2ᚖgithubᚗcomᚋtherohansᚋHungryLegs
 	return ec._Lap(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNNewAthlete2githubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐNewAthlete(ctx context.Context, v interface{}) (NewAthlete, error) {
+func (ec *executionContext) unmarshalNNewAthlete2githubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐNewAthlete(ctx context.Context, v interface{}) (NewAthlete, error) {
 	return ec.unmarshalInputNewAthlete(ctx, v)
 }
 
@@ -3966,11 +4002,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNTrackPoint2githubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx context.Context, sel ast.SelectionSet, v TrackPoint) graphql.Marshaler {
+func (ec *executionContext) marshalNTrackPoint2githubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx context.Context, sel ast.SelectionSet, v TrackPoint) graphql.Marshaler {
 	return ec._TrackPoint(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTrackPoint2ᚕᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx context.Context, sel ast.SelectionSet, v []*TrackPoint) graphql.Marshaler {
+func (ec *executionContext) marshalNTrackPoint2ᚕᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx context.Context, sel ast.SelectionSet, v []*TrackPoint) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -3994,7 +4030,7 @@ func (ec *executionContext) marshalNTrackPoint2ᚕᚖgithubᚗcomᚋtherohansᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTrackPoint2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx, sel, v[i])
+			ret[i] = ec.marshalNTrackPoint2ᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4007,7 +4043,7 @@ func (ec *executionContext) marshalNTrackPoint2ᚕᚖgithubᚗcomᚋtherohansᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalNTrackPoint2ᚖgithubᚗcomᚋtherohansᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx context.Context, sel ast.SelectionSet, v *TrackPoint) graphql.Marshaler {
+func (ec *executionContext) marshalNTrackPoint2ᚖgithubᚗcomᚋrobrohanᚋHungryLegsᚋcmdᚋserverᚐTrackPoint(ctx context.Context, sel ast.SelectionSet, v *TrackPoint) graphql.Marshaler {
 	if v == nil {
 		if !ec.HasError(graphql.GetResolverContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")

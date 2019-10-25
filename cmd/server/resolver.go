@@ -12,71 +12,47 @@ type Resolver struct{}
 func (r *Resolver) Mutation() MutationResolver {
 	return &mutationResolver{r}
 }
+
 func (r *Resolver) Query() QueryResolver {
 	return &queryResolver{r}
+}
+
+func (r *Resolver) Activity() ActivityResolver {
+	return &activityResolver{r}
+}
+
+func (r *Resolver) Laps() ActivityResolver {
+	return &activityResolver{r}
+}
+
+func (r *Resolver) Trackpoints() ActivityResolver {
+	return &activityResolver{r}
+}
+
+func (r *Resolver) Athlete() AthleteResolver {
+	return &athleteResolver{r}
+}
+
+func (r *Resolver) Activities() AthleteResolver {
+	return &athleteResolver{r}
 }
 
 type activitiesResolver struct{ *Resolver }
 
 type mutationResolver struct{ *Resolver }
 
-func (r *mutationResolver) CreateAthlete(ctx context.Context, input NewAthlete) (*Athlete, error) {
-	panic("not implemented")
-}
+type activityResolver struct{ *Resolver }
+
+type athleteResolver struct{ *Resolver }
 
 type queryResolver struct{ *Resolver }
 
-func (r *queryResolver) Athlete(ctx context.Context, alterego string) (*Athlete, error) {
-	// db := DBFromContext(ctx)
-	// config := ConfigFromContext(ctx)
+////////////////////////////////////////////////////////////////
+// Common function
 
-	athlete := models.NewAthlete(&alterego, &alterego)
-	a := Athlete{
-		Alterego: *athlete.Alterego,
-		Name:     *athlete.Name,
-	}
-	// repo := repository.Attach(athlete.Name, db, config)
-
-	s := "1900-01-01"
-	e := "3000-01-01"
-	acts, _ := r.Activities(ctx, a.Alterego, &s, &e)
-	a.Activities = acts
-
-	return &a, nil
-}
-
-func (r *queryResolver) Activities(ctx context.Context, athleteID string, startTime *string, endTime *string) ([]*Activity, error) {
-	db := DBFromContext(ctx)
-	config := ConfigFromContext(ctx)
-	repo := repository.Attach(&athleteID, db, config)
-
-	macts, err := repo.GetActivities(*startTime, *endTime)
-	if err != nil {
-		return nil, err
-	}
-
-	var acts []*Activity
-	for _, ac := range macts {
-		a := Activity{}
-		a.ID = ac.UUID
-		a.Sid = ac.SUUID
-		a.Sport = ac.Sport
-		a.Time = ac.Time
-
-		a.Laps, _ = r.Laps(ctx, athleteID, ac.UUID)
-		a.Trackpoints, _ = r.Trackpoints(ctx, athleteID, ac.UUID)
-
-		acts = append(acts, &a)
-	}
-
-	return acts, nil
-}
-func (r *queryResolver) Laps(ctx context.Context, athleteID string, activityID string) ([]*Lap, error) {
-	db := DBFromContext(ctx)
-	config := ConfigFromContext(ctx)
-	repo := repository.Attach(&athleteID, db, config)
-
-	mlaps, err := repo.GetLaps(activityID)
+func GetLaps(repo *repository.AthleteRepository, athleteID *string, activityID *string) ([]*Lap, error) {
+	// log.Printf("Lap: %v %v\n", *athleteID, *activityID)
+	mlaps, err := repo.GetLaps(*activityID)
 	if err != nil {
 		return nil, err
 	}
@@ -97,12 +73,10 @@ func (r *queryResolver) Laps(ctx context.Context, athleteID string, activityID s
 
 	return laps, nil
 }
-func (r *queryResolver) Trackpoints(ctx context.Context, athleteID string, activityID string) ([]*TrackPoint, error) {
-	db := DBFromContext(ctx)
-	config := ConfigFromContext(ctx)
-	repo := repository.Attach(&athleteID, db, config)
 
-	mlaps, err := repo.GetTrackpoints(activityID)
+func GetTrackpoints(repo *repository.AthleteRepository, athleteID *string, activityID *string) ([]*TrackPoint, error) {
+	// log.Printf("Track: %v %v\n", *athleteID, *activityID)
+	mlaps, err := repo.GetTrackpoints(*activityID)
 	if err != nil {
 		return nil, err
 	}
@@ -123,4 +97,121 @@ func (r *queryResolver) Trackpoints(ctx context.Context, athleteID string, activ
 	}
 
 	return tps, nil
+}
+
+func GetActivities(repo *repository.AthleteRepository, athleteID string, startTime *string, endTime *string) ([]*Activity, error) {
+	// log.Printf("Act: %v %v %v\n", athleteID, *startTime, *endTime)
+	macts, err := repo.GetActivities(*startTime, *endTime)
+	if err != nil {
+		return nil, err
+	}
+
+	ath := Athlete{
+		ID:       *repo.Athlete.Alterego,
+		Name:     *repo.Athlete.Name,
+		Alterego: *repo.Athlete.Alterego,
+	}
+
+	// log.Printf("%v\n", len(macts))
+
+	var acts []*Activity
+	for _, ac := range macts {
+		a := Activity{}
+		a.ID = ac.UUID
+		a.Sid = ac.SUUID
+		a.Sport = ac.Sport
+		a.Time = ac.Time
+		a.Athlete = &ath
+		acts = append(acts, &a)
+	}
+
+	return acts, nil
+}
+
+////////////////////////////////////////////////////////////////
+// Activity Resolver
+
+func (a *activityResolver) Laps(ctx context.Context, obj *Activity) ([]*Lap, error) {
+	// log.Printf("%v\n", obj)
+	db := DBFromContext(ctx)
+	config := ConfigFromContext(ctx)
+	repo := repository.Attach(obj.Athlete.Alterego, db, config)
+
+	return GetLaps(repo, &obj.Athlete.Alterego, &obj.ID)
+}
+
+func (a *activityResolver) Trackpoints(ctx context.Context, obj *Activity) ([]*TrackPoint, error) {
+	// log.Printf("%v\n", obj)
+	db := DBFromContext(ctx)
+	config := ConfigFromContext(ctx)
+	repo := repository.Attach(obj.Athlete.Alterego, db, config)
+
+	return GetTrackpoints(repo, &obj.Athlete.Alterego, &obj.ID)
+}
+
+////////////////////////////////////////////////////////////////
+// Athlete Resolver
+
+func (r *athleteResolver) Activities(ctx context.Context, obj *Athlete, startTime *string, endTime *string) ([]*Activity, error) {
+	db := DBFromContext(ctx)
+	config := ConfigFromContext(ctx)
+	repo := repository.Attach(obj.Alterego, db, config)
+
+	ath := models.NewAthlete(&obj.Alterego, &obj.Alterego)
+	repo.Athlete = ath
+
+	return GetActivities(repo, obj.Alterego, startTime, endTime)
+}
+
+////////////////////////////////////////////////////////////////
+// Mutation
+
+func (r *mutationResolver) CreateAthlete(ctx context.Context, input NewAthlete) (*Athlete, error) {
+	panic("not implemented")
+}
+
+////////////////////////////////////////////////////////////////
+// Query Resolver
+
+func (r *queryResolver) Athlete(ctx context.Context, alterego string) (*Athlete, error) {
+	// db := DBFromContext(ctx)
+	// config := ConfigFromContext(ctx)
+
+	athlete := models.NewAthlete(&alterego, &alterego)
+	a := Athlete{
+		Alterego: *athlete.Alterego,
+		Name:     *athlete.Name,
+	}
+	// repo := repository.Attach(athlete.Name, db, config)
+
+	// s := "1900-01-01"
+	// e := "3000-01-01"
+	// acts, _ := GetActivities(repo, a.Alterego, &s, &e)
+	// a.Activities = acts
+
+	return &a, nil
+}
+
+func (r *queryResolver) Activities(ctx context.Context, athleteID string, startTime *string, endTime *string) ([]*Activity, error) {
+	db := DBFromContext(ctx)
+	config := ConfigFromContext(ctx)
+	repo := repository.Attach(athleteID, db, config)
+
+	return GetActivities(repo, athleteID, startTime, endTime)
+}
+
+func (r *queryResolver) Laps(ctx context.Context, athleteID string, activityID string) ([]*Lap, error) {
+	db := DBFromContext(ctx)
+	config := ConfigFromContext(ctx)
+	repo := repository.Attach(athleteID, db, config)
+
+	return GetLaps(repo, &athleteID, &activityID)
+}
+
+func (r *queryResolver) Trackpoints(ctx context.Context, athleteID string, activityID string) ([]*TrackPoint, error) {
+	db := DBFromContext(ctx)
+	config := ConfigFromContext(ctx)
+	repo := repository.Attach(athleteID, db, config)
+
+	return GetTrackpoints(repo, &athleteID, &activityID)
 }

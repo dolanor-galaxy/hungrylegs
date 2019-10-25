@@ -28,7 +28,7 @@ func main() {
 	defer db.Close()
 
 	// Put the API on top of the connection
-	repo := repository.Attach(rootAthlete.Alterego, db, config)
+	repo := repository.Attach(*rootAthlete.Alterego, db, config)
 
 	log.Printf("Starting import...")
 	start := time.Now()

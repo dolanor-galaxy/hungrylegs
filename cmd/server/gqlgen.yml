@@ -13,3 +13,14 @@ resolver:
   filename: resolver.go
   type: Resolver
 autobind: []
+models:
+  Athlete:
+    fields:
+      activities:
+        resolver: true
+  Activity:
+    fields:
+      laps:
+        resolver: true # force a resolver to be generated
+      trackpoints:
+        resolver: true # force a resolver to be generated

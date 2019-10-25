@@ -46,7 +46,7 @@ func sqlForDriver(query string, config *models.StaticConfig) string {
 }
 
 // Attach creates a new repository and sets up needed bits
-func Attach(schema *string, db *sql.DB, config *models.StaticConfig) *AthleteRepository {
+func Attach(schema string, db *sql.DB, config *models.StaticConfig) *AthleteRepository {
 	a := AthleteRepository{
 		Db: db,
 	}
@@ -186,6 +186,7 @@ func (r *AthleteRepository) GetActivities(start string, end string) ([]*models.A
 }
 
 func (r *AthleteRepository) GetLaps(activity_uuid string) ([]*models.Lap, error) {
+	// log.Printf("%v\n", r.getLaps)
 	rows, err := r.getLaps.Query(activity_uuid)
 	if err != nil {
 		return nil, err
