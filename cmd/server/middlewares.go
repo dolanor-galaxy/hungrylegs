@@ -2,53 +2,43 @@ package server
 
 import (
 	"context"
-	"database/sql"
+	"log"
 	"net/http"
 
-	"github.com/robrohan/HungryLegs/internal/models"
+	"github.com/gorilla/mux"
 )
 
-// A private key for context that only this package can access. This is important
-// to prevent collisions between different context uses
-type contextKey struct {
-	name string
+// App is a wrapper for our router and middleware
+type App struct {
+	*mux.Router
+	log *log.Logger
+	mw  []Middleware
 }
 
-var dbCtxKey = &contextKey{"db"}
-var configCtxKey = &contextKey{"config"}
+// A Handler is a type that handles an http request within our own little mini framework.
+type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error
 
-// DBFromContext finds the user from the context. REQUIRES Middleware to have run.
-func DBFromContext(ctx context.Context) *sql.DB {
-	raw, _ := ctx.Value(dbCtxKey).(*sql.DB)
-	return raw
-}
+// Middleware is a function designed to run some code before and/or after another Handler.
+type Middleware func(Handler) Handler
 
-func ConfigFromContext(ctx context.Context) *models.StaticConfig {
-	raw, _ := ctx.Value(configCtxKey).(*models.StaticConfig)
-	return raw
-}
-
-// DBMiddleware decodes the share session cookie and packs the session into context
-func DBMiddleware(db *sql.DB) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// put it in context
-			ctx := context.WithValue(r.Context(), dbCtxKey, db)
-			// and call the next with our new context
-			r = r.WithContext(ctx)
-			next.ServeHTTP(w, r)
-		})
+// wrapMiddleware creates a new handler by wrapping middleware around a final handler.
+func wrapMiddleware(mw []Middleware, handler Handler) Handler {
+	for i := len(mw) - 1; i >= 0; i-- {
+		h := mw[i]
+		if h != nil {
+			handler = h(handler)
+		}
 	}
+
+	return handler
 }
 
-func ConfigMiddleware(config *models.StaticConfig) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// put it in context
-			ctx := context.WithValue(r.Context(), configCtxKey, config)
-			// and call the next with our new context
-			r = r.WithContext(ctx)
-			next.ServeHTTP(w, r)
-		})
+// NewApp creates an App value that handle a set of routes for the application.
+func NewApp(log *log.Logger, mw ...Middleware) *App {
+	app := App{
+		Router: mux.NewRouter(),
+		log:    log,
+		mw:     mw,
 	}
+	return &app
 }

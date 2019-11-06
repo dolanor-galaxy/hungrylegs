@@ -2,12 +2,16 @@ package server
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/robrohan/HungryLegs/internal/models"
 	"github.com/robrohan/HungryLegs/internal/repository"
 ) // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
-type Resolver struct{}
+type Resolver struct {
+	DB     *sql.DB
+	Driver string
+}
 
 func (r *Resolver) Mutation() MutationResolver {
 	return &mutationResolver{r}
@@ -112,8 +116,6 @@ func GetActivities(repo *repository.AthleteRepository, athleteID string, startTi
 		Alterego: *repo.Athlete.Alterego,
 	}
 
-	// log.Printf("%v\n", len(macts))
-
 	var acts []*Activity
 	for _, ac := range macts {
 		a := Activity{}
@@ -132,19 +134,13 @@ func GetActivities(repo *repository.AthleteRepository, athleteID string, startTi
 // Activity Resolver
 
 func (a *activityResolver) Laps(ctx context.Context, obj *Activity) ([]*Lap, error) {
-	// log.Printf("%v\n", obj)
-	db := DBFromContext(ctx)
-	config := ConfigFromContext(ctx)
-	repo := repository.Attach(obj.Athlete.Alterego, db, config)
+	repo := repository.Attach(obj.Athlete.Alterego, a.DB, a.Driver)
 
 	return GetLaps(repo, &obj.Athlete.Alterego, &obj.ID)
 }
 
 func (a *activityResolver) Trackpoints(ctx context.Context, obj *Activity) ([]*TrackPoint, error) {
-	// log.Printf("%v\n", obj)
-	db := DBFromContext(ctx)
-	config := ConfigFromContext(ctx)
-	repo := repository.Attach(obj.Athlete.Alterego, db, config)
+	repo := repository.Attach(obj.Athlete.Alterego, a.DB, a.Driver)
 
 	return GetTrackpoints(repo, &obj.Athlete.Alterego, &obj.ID)
 }
@@ -153,9 +149,7 @@ func (a *activityResolver) Trackpoints(ctx context.Context, obj *Activity) ([]*T
 // Athlete Resolver
 
 func (r *athleteResolver) Activities(ctx context.Context, obj *Athlete, startTime *string, endTime *string) ([]*Activity, error) {
-	db := DBFromContext(ctx)
-	config := ConfigFromContext(ctx)
-	repo := repository.Attach(obj.Alterego, db, config)
+	repo := repository.Attach(obj.Alterego, r.DB, r.Driver)
 
 	ath := models.NewAthlete(&obj.Alterego, &obj.Alterego)
 	repo.Athlete = ath
@@ -193,25 +187,19 @@ func (r *queryResolver) Athlete(ctx context.Context, alterego string) (*Athlete,
 }
 
 func (r *queryResolver) Activities(ctx context.Context, athleteID string, startTime *string, endTime *string) ([]*Activity, error) {
-	db := DBFromContext(ctx)
-	config := ConfigFromContext(ctx)
-	repo := repository.Attach(athleteID, db, config)
+	repo := repository.Attach(athleteID, r.DB, r.Driver)
 
 	return GetActivities(repo, athleteID, startTime, endTime)
 }
 
 func (r *queryResolver) Laps(ctx context.Context, athleteID string, activityID string) ([]*Lap, error) {
-	db := DBFromContext(ctx)
-	config := ConfigFromContext(ctx)
-	repo := repository.Attach(athleteID, db, config)
+	repo := repository.Attach(athleteID, r.DB, r.Driver)
 
 	return GetLaps(repo, &athleteID, &activityID)
 }
 
 func (r *queryResolver) Trackpoints(ctx context.Context, athleteID string, activityID string) ([]*TrackPoint, error) {
-	db := DBFromContext(ctx)
-	config := ConfigFromContext(ctx)
-	repo := repository.Attach(athleteID, db, config)
+	repo := repository.Attach(athleteID, r.DB, r.Driver)
 
 	return GetTrackpoints(repo, &athleteID, &activityID)
 }

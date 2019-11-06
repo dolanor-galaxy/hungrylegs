@@ -34,8 +34,8 @@ func prepareQuery(query string, db *sql.DB) *sql.Stmt {
 
 var re = regexp.MustCompile(`(\$[0-9]+)`)
 
-func sqlForDriver(query string, config *models.StaticConfig) string {
-	if config.Database.Driver == "sqlite3" {
+func sqlForDriver(query string, driver string) string {
+	if driver == "sqlite3" {
 		noSchema := strings.ReplaceAll(query, "\"%v\".", "")
 		placeholders := re.ReplaceAllString(noSchema, "?")
 		// We need to add the schema back somehow to the sprintfs
@@ -46,39 +46,39 @@ func sqlForDriver(query string, config *models.StaticConfig) string {
 }
 
 // Attach creates a new repository and sets up needed bits
-func Attach(schema string, db *sql.DB, config *models.StaticConfig) *AthleteRepository {
+func Attach(schema string, db *sql.DB, driver string) *AthleteRepository {
 	a := AthleteRepository{
 		Db: db,
 	}
 
 	a.hasImportedQuery = prepareQuery(fmt.Sprintf(sqlForDriver(`
 		SELECT import_time FROM "%v".fileimport WHERE file_name = $1
-	`, config), schema), db)
+	`, driver), schema), db)
 
 	a.recordImportQuery = prepareQuery(fmt.Sprintf(sqlForDriver(`
 		INSERT INTO "%v".fileimport (
 			import_time, "file_name"
 		) VALUES ($1, $2)
-	`, config), schema), db)
+	`, driver), schema), db)
 
 	a.addActivityQuery = prepareQuery(fmt.Sprintf(sqlForDriver(`
 		INSERT INTO "%v".activity (
 			uuid, suuid, sport, "time", device
 		) VALUES ($1, $2, $3, $4, $5)
-	`, config), schema), db)
+	`, driver), schema), db)
 
 	a.addLapQuery = prepareQuery(fmt.Sprintf(sqlForDriver(`
 		INSERT INTO "%v".lap (
 			"time", "start", total_time, dist, calories, max_speed,
 			avg_hr, max_hr, intensity, trigger, activity_uuid
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-	`, config), schema), db)
+	`, driver), schema), db)
 
 	a.addTrackPointQuery = prepareQuery(fmt.Sprintf(sqlForDriver(`
 		INSERT INTO "%v".trackpoint (
 			"time", lat, long, alt, dist, hr, cad, speed, "power", activity_uuid
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`, config), schema), db)
+	`, driver), schema), db)
 
 	a.getActivities = prepareQuery(fmt.Sprintf(sqlForDriver(`
 		SELECT uuid, suuid, sport, "time", device
@@ -86,7 +86,7 @@ func Attach(schema string, db *sql.DB, config *models.StaticConfig) *AthleteRepo
 		WHERE ("time" >= $1 AND "time" <= $2)
 		ORDER BY "time" desc
 		LIMIT 100
-`, config), schema), db)
+`, driver), schema), db)
 
 	a.getLaps = prepareQuery(fmt.Sprintf(sqlForDriver(`
 		SELECT
@@ -95,7 +95,7 @@ func Attach(schema string, db *sql.DB, config *models.StaticConfig) *AthleteRepo
 		FROM "%v".lap
 		WHERE activity_uuid = $1
 		ORDER BY "time" asc
-	`, config), schema), db)
+	`, driver), schema), db)
 
 	a.getTrackpoints = prepareQuery(fmt.Sprintf(sqlForDriver(`
 		SELECT 
@@ -104,7 +104,7 @@ func Attach(schema string, db *sql.DB, config *models.StaticConfig) *AthleteRepo
 		FROM "%v".trackpoint
 		WHERE activity_uuid = $1
 		ORDER BY "time" asc
-	`, config), schema), db)
+	`, driver), schema), db)
 
 	return &a
 }

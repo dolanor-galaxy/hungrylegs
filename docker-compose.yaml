@@ -14,9 +14,11 @@ services:
   hungrylegs:
     image: robrohan/hungrylegs:latest
     expose:
-      - 8080
+      - 3000
+      - 4000
     ports:
-      - 8080:8080
+      - 3000:3000
+      - 4000:4000
     depends_on:
       - db
     # volumes:

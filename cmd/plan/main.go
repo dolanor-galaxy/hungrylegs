@@ -14,6 +14,9 @@ import (
 	"strings"
 )
 
+// will be replaced with git hash
+var build = "develop"
+
 const (
 	subject = iota
 	startDate

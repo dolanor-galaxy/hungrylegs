@@ -7,20 +7,22 @@ import (
 
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
-	migrate "github.com/rubenv/sql-migrate"
 	"github.com/robrohan/HungryLegs/internal/models"
+	migrate "github.com/rubenv/sql-migrate"
 )
 
 // OpenDatabase Open up the database connection
-func OpenDatabase(config *models.StaticConfig, a *models.Athlete) (*sql.DB, error) {
-	conn := strings.ReplaceAll(config.Database.Connection, "{athlete}", *a.FileSafeName)
-	db, err := sql.Open(config.Database.Driver, conn)
+func OpenDatabase(driver string, connection string, post string, a *models.Athlete) (*sql.DB, error) {
+	conn := strings.ReplaceAll(connection, "{athlete}", *a.FileSafeName)
+	db, err := sql.Open(driver, conn)
 	if err != nil {
 		log.Printf("Failed to open athlete store")
 		return nil, err
 	}
 
-	for _, ex := range config.Database.Post {
+	posts := strings.Split(post, ";")
+
+	for _, ex := range posts {
 		cmd := strings.ReplaceAll(ex, "{athlete}", *a.Name)
 		_, err = db.Exec(cmd)
 		if err != nil {
@@ -28,7 +30,7 @@ func OpenDatabase(config *models.StaticConfig, a *models.Athlete) (*sql.DB, erro
 		}
 	}
 
-	err = UpdateAthleteStore(config, db)
+	err = UpdateAthleteStore(driver, db)
 	if err != nil {
 		log.Printf("Failed to upgrade the athlete store")
 		return nil, err
@@ -38,11 +40,11 @@ func OpenDatabase(config *models.StaticConfig, a *models.Athlete) (*sql.DB, erro
 }
 
 // UpdateAthleteStore Run any migrations that need to run
-func UpdateAthleteStore(config *models.StaticConfig, db *sql.DB) error {
+func UpdateAthleteStore(driver string, db *sql.DB) error {
 	migrations := &migrate.FileMigrationSource{
 		Dir: "migrations",
 	}
-	n, err := migrate.Exec(db, config.Database.Driver, migrations, migrate.Up)
+	n, err := migrate.Exec(db, driver, migrations, migrate.Up)
 	if err != nil {
 		log.Printf("Filed migrations\n")
 		return err
