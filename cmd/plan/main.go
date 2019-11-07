@@ -5,13 +5,15 @@ import (
 	"crypto/rand"
 	"encoding/csv"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/ardanlabs/conf"
+	"github.com/pkg/errors"
 )
 
 // will be replaced with git hash
@@ -28,37 +30,55 @@ const (
 	location
 	private
 )
-const (
-	calendar = "Plan"
-	prodID   = "//Rob Rohan//Made up go code//EN"
-	timeZone = "NZDT"
-)
 
 type recordReader func([]string)
 
-func usage() {
-	fmt.Printf("\nUsage:\n\t%v <csv path> <output file>\n\n", os.Args[0])
-	fmt.Printf("Example:\n\tplan /home/myfile.csv /home/plan.ics\n\n")
-}
-
 func main() {
-	if len(os.Args) < 3 {
-		usage()
+	if err := run(); err != nil {
+		log.Println("error :", err)
 		os.Exit(1)
 	}
-	inFile := os.Args[1]
-	outFile := os.Args[2]
+}
 
-	log.Printf("Using: %v\n", inFile)
+func run() error {
+	// =========================================================================
+	// Logging
+	log := log.New(os.Stdout, "PLAN : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+
+	var cfg struct {
+		CSVPath    string `conf:"default:input.csv"`
+		Output     string `conf:"default:plan.ics"`
+		Timezone   string `conf:"default:NZDT"`
+		CalendarID string `conf:"default://HungryLegs//HungryLegs Plan App//EN"`
+		Calendar   string `conf:"default:HungryLegs"`
+	}
+
+	if err := conf.Parse(os.Args[1:], "PLAN", &cfg); err != nil {
+		if err == conf.ErrHelpWanted {
+			usage, err := conf.Usage("PLAN", &cfg)
+			if err != nil {
+				return errors.Wrap(err, "generating config usage")
+			}
+			fmt.Println(usage)
+			return nil
+		}
+		return errors.Wrap(err, "parsing config")
+	}
+
+	inFile := cfg.CSVPath
+	outFile := cfg.Output
+
+	log.Printf("Using version %v\n", build)
+	log.Printf("Using file: %v\n", inFile)
 
 	var ics bytes.Buffer
 
 	log.Printf("Creating prolog")
-	prolog(&ics)
+	prolog(&ics, cfg.Calendar, cfg.Timezone, cfg.CalendarID)
 
 	log.Printf("Parsing file")
 	foo := func(record []string) {
-		err := formatRecord(record, &ics)
+		err := formatRecord(record, &ics, cfg.Calendar)
 		if err != nil {
 			log.Printf("Couldn't format record: %v", err)
 		}
@@ -72,13 +92,13 @@ func main() {
 	log.Printf("Writing epilog")
 	epilog(&ics)
 
-	log.Printf("Creating ics")
+	log.Printf("Creating .ics %v\n", outFile)
 	writeICS(outFile, &ics)
 
-	os.Exit(0)
+	return nil
 }
 
-func formatRecord(record []string, event *bytes.Buffer) error {
+func formatRecord(record []string, event *bytes.Buffer, calendar string) error {
 	uuid, err := newid()
 	if err != nil {
 		panic("Bad id gen")
@@ -94,31 +114,31 @@ func formatRecord(record []string, event *bytes.Buffer) error {
 		return errors.New("Event missing date")
 	}
 
-	event.WriteString("BEGIN:VEVENT\n")
-	fmt.Fprintf(event, "DTSTAMP:%vT000000Z\n", formatDate)
-	fmt.Fprintf(event, "UID:ROHAN-%v\n", uuid)
-	fmt.Fprintf(event, "DTSTART;VALUE=DATE:%v\n", formatDate)
-	fmt.Fprintf(event, "DTEND;VALUE=DATE:%v\n", formatDate)
-	fmt.Fprintf(event, "SUMMARY:%v\n", record[subject])
-	fmt.Fprintf(event, "DESCRIPTION:%v\n", record[description])
-	fmt.Fprintf(event, "CATEGORIES:%v\n", calendar)
-	event.WriteString("END:VEVENT\n")
+	event.WriteString("BEGIN:VEVENT\r\n")
+	fmt.Fprintf(event, "DTSTAMP:%vT000000Z\r\n", formatDate)
+	fmt.Fprintf(event, "UID:ROHAN-%v\r\n", uuid)
+	fmt.Fprintf(event, "DTSTART;VALUE=DATE:%v\r\n", formatDate)
+	fmt.Fprintf(event, "DTEND;VALUE=DATE:%v\r\n", formatDate)
+	fmt.Fprintf(event, "SUMMARY:%v\r\n", record[subject])
+	fmt.Fprintf(event, "DESCRIPTION:%v\r\n", record[description])
+	fmt.Fprintf(event, "CATEGORIES:%v\r\n", calendar)
+	event.WriteString("END:VEVENT\r\n")
 
 	return nil
 }
 
-func prolog(prolog *bytes.Buffer) {
-	prolog.WriteString("BEGIN:VCALENDAR\n")
-	prolog.WriteString("VERSION:2.0\n")
-	fmt.Fprintf(prolog, "X-WR-CALNAME:%v\n", calendar)
-	fmt.Fprintf(prolog, "PRODID:%v\n", prodID)
-	fmt.Fprintf(prolog, "X-WR-TIMEZONE:%v\n", timeZone)
-	fmt.Fprintf(prolog, "X-WR-CALDESC:%v\n", calendar)
-	prolog.WriteString("CALSCALE:GREGORIAN\n")
+func prolog(prolog *bytes.Buffer, calendar string, timeZone string, prodID string) {
+	prolog.WriteString("BEGIN:VCALENDAR\r\n")
+	prolog.WriteString("VERSION:2.0\r\n")
+	fmt.Fprintf(prolog, "X-WR-CALNAME:%v\r\n", calendar)
+	fmt.Fprintf(prolog, "PRODID:%v\r\n", prodID)
+	fmt.Fprintf(prolog, "X-WR-TIMEZONE:%v\r\n", timeZone)
+	fmt.Fprintf(prolog, "X-WR-CALDESC:%v\r\n", calendar)
+	prolog.WriteString("CALSCALE:GREGORIAN\r\n")
 }
 
 func epilog(epilog *bytes.Buffer) {
-	epilog.WriteString("END:VCALENDAR\n")
+	epilog.WriteString("END:VCALENDAR\r\n")
 }
 
 func writeICS(path string, buffer *bytes.Buffer) {

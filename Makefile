@@ -30,7 +30,9 @@ run.cli:
 
 # Run the plan application (.csv to .ics application)
 run.plan:
-	go run cmd/plan/main.go ./testdata/example.csv ./testdata/plan.ics
+	go run cmd/plan/main.go \
+	--csv-path ./testdata/example.csv \
+	--output ./testdata/plan.ics
 
 # Build the plan application (.csv to .ics application)
 build.plan:
