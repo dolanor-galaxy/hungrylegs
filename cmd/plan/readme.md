@@ -28,4 +28,4 @@ Unlike Google Calendar, this application supports using Emojis in the Subject.
 
 From a terminal:
 
-    $ ./plan ./example.csv ./example.ics
+    ./plan --csv-path ./example.csv --output ./example.ics
