@@ -35,7 +35,7 @@ func main() {
 func run() error {
 	// =========================================================================
 	// Logging
-	log := log.New(os.Stdout, "HUNGRYLEGS : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+	log := log.New(os.Stdout, "HL : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	// =========================================================================
 	// Configuration
@@ -106,7 +106,7 @@ func run() error {
 	log.Println("Starting import...")
 	start := time.Now()
 	// Launch the activity importer
-	importer.ImportActivites(cfg.Base.Import, repo)
+	importer.ImportActivites(log, cfg.Base.Import, repo)
 	t := time.Now()
 	elapsed := t.Sub(start)
 	log.Printf("Full import took %v", elapsed)

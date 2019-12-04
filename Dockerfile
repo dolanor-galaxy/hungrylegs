@@ -1,5 +1,5 @@
 FROM golang:alpine as builder
-RUN apk --no-cache add gcc g++ make ca-certificates
+RUN apk --no-cache add gcc g++ make ca-certificates git
 WORKDIR /go/src/github.com/robrohan/HungryLegs
 COPY . .
 RUN make build.server

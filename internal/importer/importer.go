@@ -20,8 +20,8 @@ type Importer interface {
 	Import(file string, repo repository.AthleteRepository) error
 }
 
-func ImportActivity(name string, directory string, repo *repository.AthleteRepository) error {
-	err := importFile(name, directory, repo)
+func ImportActivity(log *log.Logger, name string, directory string, repo *repository.AthleteRepository) error {
+	err := importFile(log, name, directory, repo)
 	if err != nil {
 		log.Printf("Error importing file: %v : %v", name, err.Error())
 		return err
@@ -29,7 +29,7 @@ func ImportActivity(name string, directory string, repo *repository.AthleteRepos
 	return nil
 }
 
-func ImportActivites(directory string, repo *repository.AthleteRepository) error {
+func ImportActivites(log *log.Logger, directory string, repo *repository.AthleteRepository) error {
 	log.Println("Beginning import of new files...")
 	files, err := ioutil.ReadDir(directory)
 	if err != nil {
@@ -38,7 +38,7 @@ func ImportActivites(directory string, repo *repository.AthleteRepository) error
 
 	for _, f := range files {
 		name := f.Name()
-		err = importFile(name, directory, repo)
+		err = importFile(log, name, directory, repo)
 		if err != nil {
 			log.Printf("Error importing file: %v : %v", f, err.Error())
 		}
@@ -47,7 +47,7 @@ func ImportActivites(directory string, repo *repository.AthleteRepository) error
 	return nil
 }
 
-func importFile(name string, directory string, repo *repository.AthleteRepository) error {
+func importFile(log *log.Logger, name string, directory string, repo *repository.AthleteRepository) error {
 	// Check if this file has already been imported
 	have, err := repo.HasImported(name)
 	if err != nil {
