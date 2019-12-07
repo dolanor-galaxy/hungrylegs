@@ -4,8 +4,7 @@
 
 * Activity Listing
   :PROPERTIES:
-  :header-args:sqliteold: :dir ../store/athletes :db UHJvZmVzc29yIFpvb20=.db :colnames yes
-  :header-args:sqlite: :dir /Users/robrohan/Desktop :db professor_zoom.db :colnames yes
+  :header-args:sqlite: :dir ../store/athletes :db UHJvZmVzc29yIFpvb20=.db :colnames yes
   :header-args:sql: :engine postgresql :dbhost 127.0.0.1 :dbuser postgres :dbpassword postgres :database postgres
   :END:
 ** Basic Activity list
@@ -40,8 +39,7 @@ limit 10
 
 * TRIMP
   :PROPERTIES:
-  :header-args:sqliteold: :dir ../store/athletes :db UHJvZmVzc29yIFpvb20=.db :colnames yes
-  :header-args:sqlite: :dir /Users/robrohan/Desktop :db professor_zoom.db :colnames yes
+  :header-args:sqlite: :dir ../store/athletes :db UHJvZmVzc29yIFpvb20=.db :colnames yes
   :header-args:sql: :engine postgresql :dbhost 127.0.0.1 :dbuser postgres :dbpassword postgres :database postgres
   :END:
 ** TRIMP^avg Average Heart Rate Scaling

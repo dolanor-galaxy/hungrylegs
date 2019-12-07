@@ -3,6 +3,11 @@
 hash = $(shell git log --pretty=format:'%h' -n 1)
 os = macOS10.13
 
+# echo 'export PATH="/usr/local/opt/sqlite/bin:$PATH"' >> ~/.bash_profile
+# For compilers to find sqlite you may need to set:
+LDFLAGS="-L/usr/local/opt/sqlite/lib"
+CPPFLAGS="-I/usr/local/opt/sqlite/include"
+
 # List all targets in thie file
 list:
 	@echo ""
@@ -77,3 +82,8 @@ distrib.cli: build.all.cli
 	mv build hungrylegs
 	zip hungrylegs-$(os)-$(hash).zip -r ./hungrylegs/*
 	rm -rf hungrylegs
+
+# Create the suffer score file for the dashboard
+create_score:
+	cd ./cmd/suffer; \
+	./suffer.sh "../../store/athletes/UHJvZmVzc29yIFpvb20=.db" ../../score.json

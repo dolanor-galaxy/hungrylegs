@@ -7,3 +7,5 @@ import/*.tcx
 store/athletes/*.db
 store/athletes/*.db-journal
 build/
+cmd/suffer/results.csv
+score.json
